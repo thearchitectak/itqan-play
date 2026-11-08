@@ -1,0 +1,12 @@
+{
+  "name": "itqan-play",
+  "version": "1.0.0",
+  "description": "سلسلة العب وتعلّم — ألعاب تعليمية مجانية مفتوحة المصدر من إتقان",
+  "scripts": {
+    "dev": "wrangler pages dev public --port 8788",
+    "deploy": "wrangler pages deploy public --project-name itqan-play",
+    "build-openings": "node scripts/build-openings.mjs /path/to/chess-openings"
+  },
+  "license": "MIT",
+  "type": "module"
+}
