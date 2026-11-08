@@ -26,7 +26,7 @@ export const GAMES = [
     title: { ar: 'الشطرنج', en: 'Chess' },
     desc: { ar: 'العب ضد الكمبيوتر بثلاثة مستويات مع مساعد يقترح أفضل النقلات ويشرحها، أو مع صديقك على الجهاز نفسه، أو عبر الإنترنت في غرفة برقم سري.', en: 'Play the computer at three levels with a coach that suggests and explains moves, play a friend on the same device, or play online in a private room.' },
     players: { ar: 'لاعبان', en: '2 players' },
-    tags: [{ ar: '3 مستويات', en: '3 levels' }, { ar: 'أونلاين', en: 'Online' }, { ar: 'مساعد ذكي', en: 'Smart coach' }],
+    tags: [{ ar: '3 مستويات', en: '3 levels' }, { ar: 'أونلاين', en: 'Online' }, { ar: 'مساعد ذكي', en: 'Smart coach' }, { ar: 'محادثة وصوت', en: 'Chat & voice' }],
   },
   {
     id: 'chesslearn',
@@ -40,6 +40,19 @@ export const GAMES = [
     desc: { ar: 'دروس منظمة من الصفر: حركة القطع والقواعد، ومبادئ الافتتاح وأشهر الافتتاحيات، والتكتيكات وأنماط الكش مات، والخطط والنهايات، مع ألغاز واختبارات.', en: 'Structured lessons from zero: moves and rules, opening principles and famous openings, tactics and mating patterns, plans and endgames — with puzzles and quizzes.' },
     players: { ar: 'لاعب واحد', en: '1 player' },
     tags: [{ ar: 'دروس', en: 'Lessons' }, { ar: 'ألغاز', en: 'Puzzles' }, { ar: 'اختبارات', en: 'Quizzes' }],
+  },
+  {
+    id: 'ludo',
+    module: '../../games/ludo/game.js',
+    icon: 'dice-5',
+    color: 'linear-gradient(135deg,#e53935,#f2b705 35%,#2e9d43 65%,#1e78d6)',
+    solid: '#e53935',
+    status: 'ready',
+    field: { ar: 'الحظ والتخطيط', en: 'Luck & planning' },
+    title: { ar: 'لودو', en: 'Ludo' },
+    desc: { ar: 'اللعبة العائلية الشهيرة: ارمِ النرد وأوصل قطعك الأربع إلى المركز قبل منافسيك، على الجهاز نفسه أو ضد الكمبيوتر أو عبر الإنترنت مع المحادثة والصوت.', en: 'The classic family game: roll the dice and bring your four pieces home first — on one device, against the computer, or online with chat and voice.' },
+    players: { ar: '2–4 لاعبين', en: '2–4 players' },
+    tags: [{ ar: 'أونلاين', en: 'Online' }, { ar: 'ضد الكمبيوتر', en: 'vs computer' }, { ar: 'محادثة وصوت', en: 'Chat & voice' }],
   },
   {
     id: 'more', status: 'soon', icon: 'puzzle', color: 'linear-gradient(135deg,#7c3aed,#db2777)', solid: '#7c3aed',

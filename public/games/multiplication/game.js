@@ -2,6 +2,7 @@
 // مستوحاة من لعبة الضرب الورقية: لوحة تُقرأ من الجهات الأربع، بطاقات ملوّنة حسب الجدول وبطاقات سوداء.
 import { h, ico, t, tr, addDict, settings, num, modal, toast, sound, displayName, store, copyText } from '../../assets/js/core.js';
 import { HostRoom, GuestRoom, netError } from '../../assets/js/netroom.js';
+import { Comms } from '../../assets/js/comms.js';
 
 if (!document.getElementById('mult-css')) document.head.append(h('link', { id: 'mult-css', rel: 'stylesheet', href: new URL('./mult.css', import.meta.url).href }));
 
@@ -244,6 +245,7 @@ export async function mount(root, ctx) {
     try {
       const code = await room.open();
       net = { role: 'host', room, code, pass, players: [{ id: 'host', ...myInfo(), type: 'human' }] };
+      net.comms = new Comms({ peer: room.peer, me: { id: room.peer.id, name: myInfo().name }, sendChat: (text) => room.broadcast({ type: 'chat', name: myInfo().name, text }) });
       showLobby();
     } catch (e) { toast(t(netError(e)), true); btn.disabled = false; btn.textContent = t('m_createBtn'); room.close(); }
   }
@@ -258,15 +260,22 @@ export async function mount(root, ctx) {
     try {
       const id = await room.join(code, pass, myInfo());
       net = { role: 'guest', room, code, pass, id, players: [] };
+      net.comms = new Comms({ peer: room.peer, me: { id: room.peer.id, name: myInfo().name }, sendChat: (text) => room.send({ type: 'chat', text }) });
       showLobby();
     } catch (e) { toast(t(netError(e)), true); btn.disabled = false; btn.textContent = t('m_joinBtn'); room.close(); }
   }
-  function closeNet() { try { net?.room?.close(); } catch { } net = null; }
+  function closeNet() { try { net?.comms?.destroy(); } catch { } try { net?.room?.close(); } catch { } net = null; }
+  // قائمة المشاركين في الصوت والصورة (اللاعبون الحقيقيون فقط)
+  function updateRoster() {
+    if (!net || net.role !== 'host') return;
+    const list = net.players.filter(p => p.type === 'human' || p.type === 'remote').map(p => ({ id: p.type === 'human' ? net.room.peer.id : p.id, name: p.name }));
+    net.comms?.setRoster(list); net.room.broadcast({ type: 'roster', list });
+  }
   const inviteLink = () => `${location.origin}${location.pathname}#multiplication-join-${net.code}`;
   function showLobby() {
     if (!net || (G && !G.over)) return;
     G = null; view.innerHTML = '';
-    if (net.role === 'host') net.room.broadcast({ type: 'lobby', players: net.players.map(p => ({ name: p.name, avatar: p.avatar, type: p.type })) });
+    if (net.role === 'host') { net.room.broadcast({ type: 'lobby', players: net.players.map(p => ({ name: p.name, avatar: p.avatar, type: p.type })) }); updateRoster(); }
     const list = h('div', { class: 'm-lobby-list' }, net.players.map((p, i) => h('div', { class: 'm-prow', style: { '--pc': PCOLORS[i] } },
       h('span', { class: 'm-avatar' }, p.avatar), h('b', { class: 'grow' }, p.name), p.type === 'remote' ? ico('globe', 16) : p.type === 'human' ? ico('user', 16) : ico('bot', 16),
       net.role === 'host' && (p.type === 'smart' || p.type === 'easy') ? h('button', { type: 'button', class: 'icon-btn', onclick: () => { net.players.splice(i, 1); showLobby(); } }, ico('x', 16)) : null)));
@@ -296,6 +305,12 @@ export async function mount(root, ctx) {
   }
   const seatOf = (id) => G?.players.findIndex(p => p.id === id);
   function onGuestMessage(id, msg) {
+    if (msg?.type === 'chat' && net) {
+      const from = net.players.find(p => p.id === id)?.name || '…', text = String(msg.text || '').slice(0, 300); if (!text) return;
+      net.comms?.addChat({ name: from, text });
+      for (const pid of net.room.conns.keys()) if (pid !== id) net.room.send(pid, { type: 'chat', name: from, text });
+      return;
+    }
     if (!G || G.over || msg?.type !== 'action') return;
     const s = seatOf(id);
     if (s < 0 || G.turn !== s || G.lock) return;
@@ -308,7 +323,7 @@ export async function mount(root, ctx) {
       const s = seatOf(id); if (s < 0) return;
       const p = G.players[s]; p.type = 'smart'; p.id = 'bot-' + id;
       const np = net.players.find(q => q.id === id); if (np) { np.type = 'smart'; np.id = p.id; }
-      toast(t('m_left', { name: p.name })); render(); if (G.turn === s) hook();
+      toast(t('m_left', { name: p.name })); updateRoster(); render(); if (G.turn === s) hook();
       return;
     }
     const k = net.players.findIndex(p => p.id === id);
@@ -329,6 +344,8 @@ export async function mount(root, ctx) {
   // الضيف: استقبال الحالة من المضيف
   let lastShownResult = null;
   function onHostMessage(msg) {
+    if (msg.type === 'chat') { net?.comms?.addChat({ name: msg.name, text: msg.text }); return; }
+    if (msg.type === 'roster') { net?.comms?.setRoster(msg.list); return; }
     if (msg.type === 'lobby') { if (net) { net.players = msg.players; if (!G || G.over) { G = null; showLobby(); } } return; }
     if (msg.type === 'notify') { if (msg.text) toast(msg.text, msg.kind || ''); if (msg.sound) sound(msg.sound); if (msg.cheer) cheer(); return; }
     if (msg.type !== 'state') return;

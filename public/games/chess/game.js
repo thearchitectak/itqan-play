@@ -4,6 +4,7 @@ import { h, ico, t, addDict, settings, num, modal, toast, sound, copyText, setSe
 import { Engine, LEVELS } from './engine.js';
 import { buildSuggestions } from './coach.js';
 import { Room } from './online.js';
+import { Comms } from '../../assets/js/comms.js';
 import { openReview, saveGame, loadHistory, parsePgn } from './review.js';
 
 if (!document.getElementById('chess-css')) document.head.append(h('link', { id: 'chess-css', rel: 'stylesheet', href: new URL('./chess.css', import.meta.url).href }));
@@ -179,7 +180,7 @@ export async function mount(root, ctx) {
         S.lobby = null; resetGame(); S.mode = 'online'; S.myColor = myColor; S.orient = myColor;
         S.names[myColor] = myName(S.room.role === 'host' ? 1 : 2); S.names[other(myColor)] = opponent || `${t('player')} ${num(S.room.role === 'host' ? 2 : 1)}`;
         modal.current?.close?.(null);
-        sound('notify'); renderGame();
+        sound('notify'); renderGame(); startComms();
       },
       onMessage: onRemote,
       onLeave: () => { if (S.mode === 'online' && !S.over) { toast(t('c_oppLeft'), true); finish({ text: t('c_oppLeft') }); } },
@@ -198,18 +199,18 @@ export async function mount(root, ctx) {
     if (!pass) { toast(t('c_needPass'), true); return; }
     store.set('chess-room-pass', pass);
     btn.disabled = true; btn.textContent = t('c_connecting');
-    S.room?.close(); S.room = new Room(roomHandlers());
+    closeRoom(); S.room = new Room(roomHandlers());
     try {
       const code = await S.room.host({ password: pass, name: myName(1), color });
       showLobby(code, pass);
-    } catch (e) { toast(errText(e), true); btn.disabled = false; btn.textContent = t('c_createBtn'); S.room?.close(); S.room = null; }
+    } catch (e) { toast(errText(e), true); btn.disabled = false; btn.textContent = t('c_createBtn'); closeRoom(); S.room = null; }
   }
   async function joinRoom(code, pass, btn) {
     if (!/^\d{6}$/.test(code)) { toast(t('c_needCode'), true); return; }
     btn.disabled = true; btn.textContent = t('c_connecting');
-    S.room?.close(); S.room = new Room(roomHandlers());
+    closeRoom(); S.room = new Room(roomHandlers());
     try { await S.room.join({ code, password: pass, name: myName(2) }); }
-    catch (e) { toast(errText(e), true); btn.disabled = false; btn.textContent = t('c_joinBtn'); S.room?.close(); S.room = null; }
+    catch (e) { toast(errText(e), true); btn.disabled = false; btn.textContent = t('c_joinBtn'); closeRoom(); S.room = null; }
   }
   function inviteLink(code) { return `${location.origin}${location.pathname}#chess-join-${code}`; }
   function showLobby(code, pass) {
@@ -221,9 +222,19 @@ export async function mount(root, ctx) {
         h('div', {}, h('small', { class: 'muted' }, t('c_roomCode')), h('div', { class: 'c-bigcode', dir: 'ltr' }, code)),
         h('div', {}, h('small', { class: 'muted' }, t('c_roomPass')), h('div', { class: 'c-bigcode', dir: 'ltr' }, pass))),
       h('div', { class: 'field', style: { marginTop: '14px' } }, h('span', {}, t('c_shareLink')), h('div', { class: 'row' }, h('input', { class: 'input grow', readonly: true, value: link, dir: 'ltr' }), h('button', { class: 'btn sm', type: 'button', onclick: () => copyText(t('c_inviteText', { link, code, pass })) }, ico('copy', 16), t('c_copyInvite')))),
-      h('button', { class: 'btn ghost', type: 'button', style: { marginTop: '16px' }, onclick: () => { S.room?.close(); S.room = null; S.lobby = null; showModes('online'); } }, t('c_cancel'))));
+      h('button', { class: 'btn ghost', type: 'button', style: { marginTop: '16px' }, onclick: () => { closeRoom(); S.room = null; S.lobby = null; showModes('online'); } }, t('c_cancel'))));
+  }
+  // المحادثة والصوت والصورة في المباراة عبر الإنترنت
+  let comms = null;
+  function closeRoom() { try { comms?.destroy(); } catch { } comms = null; try { S.room?.close(); } catch { } }
+  function startComms() {
+    if (comms || !S.room?.peer || !S.room.conn) return;
+    const me = S.names[S.myColor];
+    comms = new Comms({ peer: S.room.peer, me: { id: S.room.peer.id, name: me }, sendChat: (text) => S.room?.send({ type: 'chat', text }) });
+    comms.setRoster([{ id: S.room.peer.id, name: me }, { id: S.room.conn.peer, name: S.names[other(S.myColor)] }]);
   }
   function onRemote(msg) {
+    if (msg?.type === 'chat') { comms?.addChat({ name: S.names[other(S.myColor)], text: String(msg.text || '').slice(0, 300) }); return; }
     if (S.mode !== 'online') return;
     if (msg.type === 'move') {
       if (S.chess.turn() === S.myColor || S.over) return;
@@ -386,7 +397,7 @@ export async function mount(root, ctx) {
       S.mode !== 'online' ? btn('refresh-cw', t('c_new'), () => S.mode === 'computer' ? startComputer() : startLocal()) : null,
       S.chess.history().length >= 2 && (S.mode !== 'online' || S.over) ? btn('brain', t('c_review'), () => { S.token++; S.thinking = false; engine?.stop(); showReview(currentGameRecord(), () => { renderGame(); maybeEngine(); }); }) : null,
       btn('settings', t('c_settings'), () => ctx.openSettings()),
-      btn('chevron-right', t('c_backToModes'), () => { S.token++; S.room?.close(); S.room = null; showModes(S.mode); }));
+      btn('chevron-right', t('c_backToModes'), () => { S.token++; closeRoom(); S.room = null; showModes(S.mode); }));
     view.append(h('div', { class: 'c-layout' },
       h('div', { class: 'c-left' }, barsEl.top, wrap, barsEl.bottom),
       h('div', { class: 'c-side' }, h('div', { class: 'panel' }, statusEl, controls), S.mode === 'computer' ? h('div', { class: 'panel' }, coachEl) : null, h('div', { class: 'panel' }, h('b', {}, t('c_moves')), movesEl))));
@@ -543,7 +554,7 @@ export async function mount(root, ctx) {
   if (S.joinCode) showModes('online'); else showModes();
 
   return {
-    unmount() { alive = false; rv?.destroy(); S.token++; S.room?.close(); engine?.terminate(); coach?.terminate(); window.removeEventListener('pointermove', onMove); window.removeEventListener('pointerup', onUp); },
+    unmount() { alive = false; rv?.destroy(); S.token++; closeRoom(); engine?.terminate(); coach?.terminate(); window.removeEventListener('pointermove', onMove); window.removeEventListener('pointerup', onUp); },
     onLang() { if (S.reviewing) { showReview(S.reviewing.g, S.reviewing.back); } else if (S.mode) renderGame(); else if (S.lobby) showLobby(S.lobby.code, S.lobby.pass); else showModes(); },
     onSettings(k) { if (S.reviewing && (k === 'boardTheme' || k === 'pieceSet')) { rv?.rerender?.(); return; } if (S.mode && (k === 'boardTheme' || k === 'pieceSet')) { drawBoard(); renderBars(); } },
     onHash(hash) { if (/^chess-join-\d{6}$/.test(hash) && !S.mode && !S.lobby) { S.joinCode = hash.split('-')[2]; S.onlineTab = 'join'; showModes('online'); } },
