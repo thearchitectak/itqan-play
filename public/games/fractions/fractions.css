@@ -1,0 +1,24 @@
+.fr { display: grid; gap: 14px; }
+.fr-tabs { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+.fr-tabs button { border: 1px solid var(--line); background: #fff; border-radius: 99px; padding: 8px 14px; font-weight: 800; cursor: pointer; }
+.fr-tabs button.on { background: #f59e0b; color: #fff; border-color: #f59e0b; }
+.fr-score { margin-inline-start: auto; background: #fff; border-radius: 99px; padding: 6px 14px; box-shadow: var(--shadow); }
+.fr-play { display: grid; gap: 14px; justify-items: center; background: linear-gradient(180deg, #fffbeb, #fff); border-radius: 22px; padding: 18px; }
+.fr-play h2 { margin: 0; display: flex; gap: 12px; align-items: center; flex-wrap: wrap; justify-content: center; }
+.fr-pizza { width: min(70vw, 280px); filter: drop-shadow(0 10px 18px rgba(180, 83, 9, .3)); }
+.fr-pizza .tap { cursor: pointer; } .fr-pizza .tap:hover { fill: #fde047; }
+.fr-f { display: inline-grid; justify-items: center; font-weight: 900; font-size: 22px; line-height: 1.1; vertical-align: middle; }
+.fr-f i { display: block; width: 100%; min-width: 22px; height: 3px; background: currentColor; border-radius: 2px; margin: 2px 0; }
+.fr-f.big { font-size: 34px; }
+.fr-opts { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; width: min(520px, 100%); }
+.fr-opt { border: 2px solid var(--line); background: #fff; border-radius: 16px; padding: 12px; cursor: pointer; display: grid; place-items: center; }
+.fr-opt:not(:disabled):hover { border-color: #f59e0b; } .fr-opt.ok, .btn.ok { background: #dcfce7; border-color: #22c55e; }
+.fr-now { background: #fff; border-radius: 14px; padding: 6px 16px; box-shadow: var(--shadow); }
+.fr-bar { --d: 4; display: grid; grid-template-columns: repeat(var(--d), 1fr); gap: 3px; width: min(420px, 80vw); height: 40px; padding: 3px; background: #334155; border-radius: 10px; }
+.fr-bar i { background: #fff; border-radius: 6px; } .fr-bar i.on { background: #22c55e; }
+.fr-cmp { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; width: min(760px, 100%); }
+.fr-cbox { display: grid; gap: 10px; justify-items: center; border: 2px solid var(--line); background: #fff; border-radius: 18px; padding: 14px; cursor: pointer; }
+.fr-cbox .fr-bar { width: 100%; } .fr-cbox.ok { background: #dcfce7; border-color: #22c55e; }
+.fr-sum { display: flex; gap: 14px; align-items: center; font-size: 30px; font-weight: 900; }
+.fr-bars { display: grid; gap: 8px; }
+@media (max-width: 560px) { .fr-opts { grid-template-columns: 1fr 1fr; } .fr-cmp { grid-template-columns: 1fr; } }

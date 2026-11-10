@@ -31,7 +31,7 @@ export const store = {
 };
 
 // ---------- الإعدادات العامة ----------
-const DEFAULT_SETTINGS = { lang: 'ar', digits: 'latin', sound: true, soundSet: 'wood', volume: 0.7, boardTheme: 'green', pieceSet: 'cburnett', playerName: '' };
+const DEFAULT_SETTINGS = { lang: 'ar', digits: 'latin', sound: true, soundSet: 'wood', volume: 0.7, boardTheme: 'green', pieceSet: 'cburnett', playerName: '', view: '3d' };
 export const settings = { ...DEFAULT_SETTINGS, ...store.get('settings', {}) };
 const listeners = new Set();
 export function setSetting(k, v) { settings[k] = v; store.set('settings', settings); listeners.forEach(f => f(k, v)); }
@@ -166,4 +166,15 @@ export function sound(kind) {
 export function displayName(fallbackIndex = 1) {
   const n = (settings.playerName || '').trim();
   return n || `${t('player')} ${num(fallbackIndex)}`;
+}
+
+// ===== مفتاح العرض ثنائي الأبعاد / ثلاثي الأبعاد (يُطبَّق على كل الألعاب) =====
+export const is3d = () => settings.view !== '2d';
+export function applyView() { document.body.classList.toggle('v3d', is3d()); document.body.classList.toggle('v2d', !is3d()); }
+export function viewToggle() {
+  const mk = () => h('span', { class: 'vt' }, ['2d', '3d'].map(v => h('button', { type: 'button', class: (settings.view || '3d') === v ? 'on' : '', title: v === '3d' ? 'عرض مجسّم ثلاثي الأبعاد' : 'عرض مسطّح ثنائي الأبعاد',
+    onclick: (e) => { e.stopPropagation(); setSetting('view', v); } }, v.toUpperCase())));
+  const box = mk();
+  const off = onSettings((k) => { if (k !== 'view') return; if (!box.isConnected) { off(); return; } box.replaceChildren(...mk().childNodes); });
+  return box;
 }

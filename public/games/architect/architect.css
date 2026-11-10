@@ -1,0 +1,14 @@
+.ar { display: grid; gap: 12px; }
+.ar-top { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.ar-tools { display: grid; gap: 8px; }
+.ar-chips { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+.ar-chips button { border: 2px solid transparent; border-radius: 99px; padding: 5px 12px; font-weight: 800; cursor: pointer; background: #fff; box-shadow: var(--shadow); display: inline-flex; align-items: center; gap: 4px; }
+.ar-chips button.on { border-color: #0f172a; } .ar-chips small { color: #475569; font-weight: 600; } .ar-chips i { width: 14px; height: 14px; border-radius: 4px; border: 1px solid #94a3b8; }
+.ar-main { display: grid; grid-template-columns: minmax(0, 1fr) minmax(250px, 320px); gap: 16px; align-items: start; }
+@media (max-width: 900px) { .ar-main { grid-template-columns: 1fr; } }
+.ar-svg { width: 100%; height: auto; display: block; border-radius: 16px; box-shadow: var(--shadow-lg); background: #d9f99d; touch-action: none; direction: ltr; }
+.ar-side { display: grid; gap: 10px; }
+.ar-money { font-weight: 900; } .ar-money.over { color: #dc2626; }
+.ar-bar { height: 12px; background: #e5e7eb; border-radius: 99px; overflow: hidden; } .ar-bar i { display: block; height: 100%; }
+.ar-areas { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; } .ar-areas span { border-radius: 99px; padding: 3px 10px; font-size: 13px; font-weight: 700; }
+.ar-3d { width: 100%; border-radius: 18px; overflow: hidden; box-shadow: var(--shadow-lg); min-height: 380px; } .ar-3d canvas { display: block; width: 100% !important; }

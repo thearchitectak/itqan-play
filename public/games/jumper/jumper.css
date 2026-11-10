@@ -1,0 +1,9 @@
+.jp-stage { position: relative; width: min(100%, 1100px); margin: 0 auto; }
+.jp-cv { width: 100%; height: auto; display: block; border-radius: 18px; box-shadow: var(--shadow-lg); image-rendering: pixelated; touch-action: none; }
+.jp-msg { position: absolute; inset: 0; display: none; place-content: center; justify-items: center; gap: 12px; text-align: center; background: rgba(15,23,42,.55); color: #fff; border-radius: 18px; padding: 16px; }
+.jp-msg.on { display: grid; } .jp-msg h2 { margin: 0; } .jp-lv { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; }
+.jp-pads { display: none; justify-content: space-between; margin-top: 10px; }
+.jp-pads > div { display: flex; gap: 10px; }
+.jp-pad { width: 74px; height: 74px; border-radius: 50%; border: 0; background: #1e293b; color: #fff; font-size: 30px; touch-action: none; user-select: none; box-shadow: 0 4px 0 #0f172a; }
+.jp-pad.jump { background: #f97316; box-shadow: 0 4px 0 #c2410c; width: 88px; height: 88px; }
+@media (hover: none), (max-width: 820px) { .jp-pads { display: flex; } }

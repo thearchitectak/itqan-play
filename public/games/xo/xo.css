@@ -1,0 +1,10 @@
+.xo-wrap { position: absolute; inset: 0; display: grid; grid-template-rows: auto minmax(0, 1fr) auto; justify-items: center; align-items: center; gap: 8px; padding: 10px; background: linear-gradient(160deg, #eef2ff, #fdf2f8); }
+.xo-score { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
+.xo-sc { color: #fff; border-radius: 99px; padding: 0 8px; }
+.xo-grid { --n: 3; width: min(100cqw - 24px, 100cqh - 130px); aspect-ratio: 1; display: grid; grid-template-columns: repeat(var(--n), 1fr); gap: 6px; background: #c7d2fe; padding: 6px; border-radius: 18px; box-shadow: 0 12px 30px rgba(30, 41, 59, .2); }
+.xo-cell { border: 0; border-radius: calc(36px / var(--n) * 2); background: #fff; font-size: calc(min(100cqw, 100cqh) / var(--n) * .55); font-weight: 900; display: grid; place-items: center; cursor: pointer; line-height: 1; padding: 0; }
+.xo-cell:disabled { cursor: default; }
+.xo-cell .xo-ghost { opacity: 0; transition: opacity .15s; }
+.xo-cell:hover .xo-ghost { opacity: .25; }
+.xo-cell.last { animation: dmpop .25s; }
+.xo-cell.win { background: #fef08a; }

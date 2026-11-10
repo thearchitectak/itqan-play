@@ -12,3 +12,4 @@
 | Simple Icons | `../assets/js/brands.js` | CC0 |
 | Lichess chess-openings (ECO names by position) | `../games/chess/data/openings.json` | CC0 1.0 (see `OPENINGS-COPYING.txt`) |
 | Lichess puzzle database (selection) | `../games/chesslearn/puzzles.json` | CC0 1.0 |
+| three.js r170 | `three/` | MIT (see `three/LICENSE`) |

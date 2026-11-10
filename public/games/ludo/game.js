@@ -1,6 +1,6 @@
 // لعبة لودو — جزء من سلسلة العب وتعلّم
 // على الجهاز نفسه، أو ضد الكمبيوتر، أو عبر الإنترنت (مع محادثة وميكروفون وكاميرا اختيارية)
-import { h, ico, t, addDict, settings, num, modal, toast, sound, displayName, store, copyText } from '../../assets/js/core.js';
+import { h, ico, t, addDict, settings, num, modal, toast, sound, displayName, store, copyText, viewToggle } from '../../assets/js/core.js';
 import { HostRoom, GuestRoom, netError } from '../../assets/js/netroom.js';
 import { Comms } from '../../assets/js/comms.js';
 
@@ -75,12 +75,13 @@ export async function mount(root, ctx) {
   const saved = store.get('ludo-setup', {});
   const setup = { ...DEFAULT, ...saved, players: DEFAULT.players.map((p, i) => ({ ...p, ...(saved.players?.[i] || {}) })) };
   let G = null, net = null, timer = null, alive = true;
+  const unreadTick = setInterval(() => { if (G?.net) updateUnread(); }, 800);
   const view = h('div', { class: 'ludo' }); root.append(view);
   const later = (fn, ms) => { clearTimeout(timer); timer = setTimeout(() => { if (alive) fn(); }, ms); };
 
   // ================= الإعداد =================
   function showSetup() {
-    clearTimeout(timer); G = null; if (net) closeNet(); view.innerHTML = '';
+    clearTimeout(timer); G = null; if (net) closeNet(); view.innerHTML = ''; exitFull();
     const modes = h('div', { class: 'l-modes' }, [['local', '🎲'], ['online', '🌐']].map(([m, ic]) => h('button', { type: 'button', class: 'l-mode' + (setup.mode === m ? ' on' : ''), onclick: () => { setup.mode = m; showSetup(); } },
       h('span', { class: 'l-mode-ic' }, ic), h('b', {}, t('l_' + m)), h('small', {}, t('l_' + m + 'D')))));
     let body;
@@ -285,31 +286,98 @@ export async function mount(root, ctx) {
     if (G.net?.role === 'guest') { net.room.send({ type: 'action', act: kind, k }); return; }
     if (kind === 'roll') roll(); else move(k);
   }
+  // موضع زاوية بيت اللون بعد تدوير اللوحة (بوحدات المربعات)
+  function yardBox(c, rot) {
+    const base = [[3, 3], [12, 3], [12, 12], [3, 12]][c];
+    const a = rot * Math.PI / 180, dx = base[0] - 7.5, dy = base[1] - 7.5;
+    const x = 7.5 + dx * Math.cos(a) - dy * Math.sin(a), y = 7.5 + dx * Math.sin(a) + dy * Math.cos(a);
+    return { left: Math.round(x - 3), top: Math.round(y - 3) };
+  }
+  // هيكل ثابت لشاشة اللعب: الشريط، المحادثة (الرسائل وخانة الكتابة)، اللوحة.
+  // يُعاد رسم الشريط واللوحة فقط، فلا تتحرك المحادثة ولا يفقد حقل الكتابة تركيزه.
+  let F = null, chatOpen = false;
+  function ensureFrame() {
+    if (F && F.root.isConnected) return F;
+    view.innerHTML = '';
+    const comms = G.net ? net?.comms : null;
+    const bar = h('div', { class: 'l-fbar' });
+    const board = h('div', { class: 'l-fboard' });
+    const msgs = h('div', { class: 'l-cmsgs' });
+    const head = comms ? h('div', { class: 'l-chead' }, ico('message-circle', 18), h('b', { class: 'grow' }, t('cm_chat')),
+      h('button', { type: 'button', class: 'icon-btn', 'aria-label': t('close'), onclick: () => setChat(false) }, ico('x', 18))) : null;
+    const top = h('div', { class: 'l-ctop' }, head, msgs);
+    const input = h('div', { class: 'l-cinput' });
+    const root = h('div', { class: 'l-full' + (comms ? ' has-chat' : '') }, bar, top, board, input);
+    view.append(root);
+    F = { root, bar, board, top, msgs, input, comms };
+    if (comms) {
+      comms.dock(msgs, input);
+      comms.onToggle = (force) => setChat(force ?? !chatOpen);
+      setChat(chatOpen);
+    }
+    return F;
+  }
+  function setChat(v) {
+    chatOpen = !!v;
+    if (!F) return;
+    F.root.classList.toggle('chat-open', chatOpen);
+    F.comms?.setDockVisible(chatOpen);
+    updateUnread();
+    view.querySelectorAll('.l-chat').forEach(b => b.classList.toggle('on', chatOpen));
+  }
   function render() {
     if (!alive || !G) return;
-    view.innerHTML = '';
+    document.body.classList.add('l-lock');
+    const fr = ensureFrame();
     const p = cur();
     const mySeat = G.net ? G.net.mySeat : null;
     const status = G.over ? t('l_winner', { name: G.players[G.winner].name })
       : canAct() ? (!G.rolled ? t('l_yourRoll') : G.movable.length > 1 ? t('l_pick') : t('l_diceIs', { n: num(G.dice) }))
         : t('l_turnOf', { name: p.name });
-    const seats = h('div', { class: 'l-seats' }, G.players.map((q, i) => h('div', { class: 'l-seat' + (i === G.turn && !G.over ? ' active' : ''), style: { '--pc': COLORS[q.c] } },
-      h('span', { class: 'l-av sm' }, q.avatar), h('div', { class: 'grow' }, h('b', {}, q.name, mySeat === i ? ` (${t('l_you')})` : ''), h('small', {}, t(CNAMES[q.c]), ' · ', num(q.tokens.filter(x => x === 56).length), '/', num(4))),
-      q.type === 'remote' ? ico('globe', 15) : isBot(q) ? ico('bot', 15) : null)));
-    const rollBtn = h('button', { class: 'btn l-roll', type: 'button', style: { '--pc': COLORS[p.c] }, disabled: !canAct() || G.rolled, onclick: () => act('roll') }, ico('dice-5', 20), t('l_roll'));
-    view.append(
-      h('div', { class: 'row l-top no-print' },
-        h('span', { class: 'grow' }),
-        h('button', { class: 'btn ghost sm', type: 'button', onclick: showRules }, ico('info', 16), t('l_rules')),
-        G.net ? h('button', { class: 'btn ghost sm', type: 'button', onclick: () => { closeNet(); G = null; showSetup(); } }, ico('log-out', 16), t('l_leave'))
-          : h('button', { class: 'btn ghost sm', type: 'button', onclick: showSetup }, ico('settings', 16), t('l_change'))),
-      h('div', { class: 'l-layout' },
-        h('div', { class: 'l-boardwrap' }, boardSvg(G), h('div', { class: 'l-center', style: { '--pc': COLORS[p.c] }, onclick: () => { if (!G.rolled) act('roll'); } }, diceEl(G.dice, G.rolling))),
-        h('div', { class: 'l-side' },
-          h('div', { class: 'panel l-status', style: { '--pc': COLORS[p.c] } }, h('div', { class: 'row' }, h('span', { class: 'l-av' }, p.avatar), h('b', { class: 'grow' }, status)), rollBtn),
-          h('div', { class: 'panel' }, seats),
-          G.log.length ? h('details', { class: 'panel' }, h('summary', {}, t('l_log')), h('ul', { class: 'l-log' }, G.log.map(s => h('li', {}, s)))) : '')));
+    const rot = G.net ? ROT[G.players[G.net.mySeat].c] : 0;
+    const comms = fr.comms;
+    // لوحات الأسماء على بيوت اللاعبين
+    const plates = G.players.map((q, i) => {
+      const { left, top } = yardBox(q.c, rot);
+      const mine = mySeat === i;
+      const active = i === G.turn && !G.over;
+      const myTurnHere = active && canAct() && !G.rolled && (G.net ? mine : q.type === 'human');
+      const tools = mine && comms ? h('span', { class: 'l-tools' },
+        h('button', { type: 'button', class: 'l-tool l-chat' + (chatOpen ? ' on' : ''), title: t('cm_chat'), onclick: (e) => { e.stopPropagation(); setChat(!chatOpen); } }, ico('message-circle', 16), h('i', { class: 'l-unread hidden' })),
+        h('button', { type: 'button', class: 'l-tool l-mic' + (comms.mic ? ' on' : ''), title: t(comms.mic ? 'cm_micOff' : 'cm_micOn'), onclick: async (e) => { e.stopPropagation(); await comms.setMic(!comms.mic); render(); } }, ico(comms.mic ? 'mic' : 'mic-off', 16)),
+        h('button', { type: 'button', class: 'l-tool l-cam' + (comms.cam ? ' on' : ''), title: t(comms.cam ? 'cm_camOff' : 'cm_camOn'), onclick: async (e) => { e.stopPropagation(); await comms.setCam(!comms.cam); if (comms.cam) setChat(true); render(); } }, ico(comms.cam ? 'video' : 'video-off', 16))) : null;
+      return h('div', { class: 'l-plate' + (active ? ' active' : '') + (mine ? ' mine' : ''), style: { '--pc': COLORS[q.c], left: `${(left + 0.25) / 15 * 100}%`, top: `${(top + 5.22) / 15 * 100}%`, width: `${5.5 / 15 * 100}%`, height: `${0.72 / 15 * 100}%` } },
+        h('span', { class: 'l-pav' }, q.avatar),
+        h('b', { class: 'l-pname' }, q.name),
+        h('small', { class: 'l-pcount' }, num(q.tokens.filter(x => x === 56).length), '/', num(4)),
+        q.type === 'remote' && !mine ? ico('globe', 13) : isBot(q) ? ico('bot', 13) : null,
+        tools,
+        myTurnHere ? h('button', { type: 'button', class: 'l-proll', onclick: (e) => { e.stopPropagation(); act('roll'); } }, ico('dice-5', 15), t('l_roll')) : null);
+    });
+    const fsBtn = h('button', { class: 'btn ghost sm', type: 'button', title: 'Fullscreen', onclick: () => { try { document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen(); } catch { } } }, '⛶');
+    fr.bar.innerHTML = '';
+    fr.bar.append(
+      G.net ? h('button', { class: 'btn ghost sm', type: 'button', onclick: () => { closeNet(); G = null; exitFull(); showSetup(); } }, ico('log-out', 16), h('span', { class: 'l-hide-sm' }, t('l_leave')))
+        : h('button', { class: 'btn ghost sm', type: 'button', onclick: () => { exitFull(); showSetup(); } }, ico('chevron-right', 16), h('span', { class: 'l-hide-sm' }, t('l_change'))),
+      h('div', { class: 'l-fstatus', style: { '--pc': COLORS[p.c] } }, h('span', {}, p.avatar), h('b', {}, status)),
+      viewToggle(),
+      h('button', { class: 'btn ghost sm', type: 'button', onclick: showRules }, ico('info', 16)),
+      fsBtn);
+    fr.board.innerHTML = '';
+    fr.board.append(h('div', { class: 'l-boardwrap' }, boardSvg(G), plates,
+      h('div', { class: 'l-center', style: { '--pc': COLORS[p.c] }, onclick: () => { if (!G.rolled) act('roll'); } }, diceEl(G.dice, G.rolling))));
+    updateUnread();
     broadcast();
+  }
+  function exitFull() {
+    document.body.classList.remove('l-lock');
+    if (F) { try { F.comms?.undock(); } catch { } F = null; }
+    chatOpen = false;
+    try { if (document.fullscreenElement) document.exitFullscreen(); } catch { }
+  }
+  function updateUnread() {
+    const n = chatOpen ? 0 : (net?.comms?.unread || 0);
+    view.querySelectorAll('.l-unread').forEach(el => { el.textContent = n; el.classList.toggle('hidden', !n); });
   }
   function confetti() {
     const box = h('div', { class: 'm-confetti l-confetti' }); document.body.append(box);
@@ -382,11 +450,12 @@ export async function mount(root, ctx) {
   const inviteLink = () => `${location.origin}${location.pathname}#ludo-join-${net.code}`;
   function showLobby() {
     if (!net || (G && !G.over)) return;
-    G = null; view.innerHTML = '';
+    G = null; view.innerHTML = ''; exitFull();
     const n = net.players.length, seats = SEATS[Math.max(2, n)] || SEATS[4];
     if (net.role === 'host') { net.room.broadcast({ type: 'lobby', players: net.players.map(p => ({ name: p.name, avatar: p.avatar, type: p.type })) }); updateRoster(); }
     view.append(h('div', { class: 'panel l-lobby' },
       h('div', { class: 'row' }, h('h2', { class: 'grow', style: { margin: 0 } }, ico('globe', 20), ' ', t('l_lobby')), h('button', { class: 'btn ghost sm', type: 'button', onclick: () => { closeNet(); showSetup(); } }, t('l_leave'))),
+      net.comms ? net.comms.bar() : null,
       h('div', { class: 'l-codes' }, h('div', {}, h('small', { class: 'muted' }, t('l_code')), h('b', { dir: 'ltr' }, net.code)), h('div', {}, h('small', { class: 'muted' }, t('l_pass')), h('b', { dir: 'ltr' }, net.pass))),
       h('div', { class: 'l-players' }, net.players.map((p, i) => h('div', { class: 'l-prow', style: { '--pc': COLORS[(SEATS[n] || SEATS[4])[i] ?? i] } }, h('span', { class: 'l-av' }, p.avatar), h('b', { class: 'grow' }, p.name),
         p.type === 'remote' ? ico('globe', 16) : p.type === 'human' ? ico('user', 16) : ico('bot', 16),
@@ -459,7 +528,7 @@ export async function mount(root, ctx) {
   { const m = /^ludo-join-(\d{6})$/.exec(location.hash.slice(1)); if (m) { setup.mode = 'online'; setup.tab = 'join'; setup.joinCode = m[1]; } }
   showSetup();
   return {
-    unmount() { alive = false; clearTimeout(timer); closeNet(); },
+    unmount() { alive = false; clearTimeout(timer); clearInterval(unreadTick); closeNet(); exitFull(); },
     onLang() { if (G && !G.over) render(); else if (net) showLobby(); else showSetup(); },
     onSettings() { },
     onHash(hash) { const m = /^ludo-join-(\d{6})$/.exec(hash); if (m && !net && !(G && !G.over)) { setup.mode = 'online'; setup.tab = 'join'; setup.joinCode = m[1]; showSetup(); } },

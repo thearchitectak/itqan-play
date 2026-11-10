@@ -1,0 +1,30 @@
+.fs { display: grid; gap: 14px; }
+.fs-main { display: grid; grid-template-columns: minmax(220px, 340px) minmax(0, 1fr); gap: 18px; align-items: start; }
+@media (max-width: 760px) { .fs-main { grid-template-columns: 1fr; } }
+.fs-stage { display: grid; gap: 10px; justify-items: center; background: radial-gradient(circle at 50% 30%, #fdf2f8, #fce7f3 60%, #fbcfe8); border-radius: 24px; padding: 16px; }
+.fs-fig { width: min(70vw, 260px); height: auto; filter: drop-shadow(0 10px 14px rgba(190, 24, 93, .2)); }
+.fs-fig.small { width: 90px; }
+.fs-harm { display: grid; justify-items: center; background: #fff; border-radius: 14px; padding: 6px 12px; font-weight: 800; text-align: center; } .fs-harm small { font-weight: 600; color: var(--ink-3); }
+.fs-price { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; font-weight: 700; } .fs-price .input { width: 90px; display: inline-block; }
+.fs-panel { display: grid; gap: 8px; }
+.fs-chips { display: flex; gap: 6px; flex-wrap: wrap; }
+.fs-chips button { border: 2px solid var(--line); background: #fff; border-radius: 99px; padding: 6px 12px; font-weight: 700; cursor: pointer; display: inline-flex; gap: 6px; align-items: center; }
+.fs-chips button.on { border-color: #db2777; background: #fdf2f8; }
+.fs-dot { width: 16px; height: 16px; border-radius: 50%; border: 1px solid #cbd5e1; }
+.fs-pal { display: flex; flex-wrap: wrap; gap: 6px; } .fs-pal button { width: 32px; height: 32px; border-radius: 50%; border: 2px solid #e5e7eb; cursor: pointer; } .fs-pal button.on { box-shadow: 0 0 0 3px #db2777; }
+.fs-coll { display: grid; gap: 8px; } .fs-cl { display: flex; gap: 8px; flex-wrap: wrap; }
+.fs-ci { position: relative; background: #fff; border-radius: 14px; box-shadow: var(--shadow); padding: 4px; } .fs-ci .icon-btn { position: absolute; top: 2px; inset-inline-end: 2px; } .fs-load { position: absolute; bottom: 4px; inset-inline-start: 4px; border: 0; background: #fdf2f8; border-radius: 8px; cursor: pointer; }
+.fs-show { position: fixed; inset: 0; z-index: 200; background: radial-gradient(ellipse at 50% 20%, #4c1d95, #0f0a1e 70%); overflow: hidden; }
+.fs-lights { position: absolute; inset: 0; background: conic-gradient(from 200deg at 20% 0%, transparent 0 20deg, rgba(255,255,255,.12) 25deg, transparent 30deg), conic-gradient(from 140deg at 80% 0%, transparent 0 20deg, rgba(255,255,255,.12) 25deg, transparent 30deg); animation: fslights 4s ease-in-out infinite alternate; }
+@keyframes fslights { to { filter: hue-rotate(60deg); } }
+.fs-runway { position: absolute; left: 50%; bottom: 0; width: 46%; height: 70%; transform: translateX(-50%) perspective(400px) rotateX(55deg); transform-origin: bottom; background: linear-gradient(#1f2937, #f9a8d4); }
+.fs-crowd { position: absolute; bottom: 8px; width: 100%; text-align: center; font-size: 30px; letter-spacing: 6px; animation: shake 1s infinite; }
+.fs-model { position: absolute; left: 50%; bottom: 8%; transform: translateX(-50%) scale(.3); opacity: 0; animation: fswalk 2.4s ease-in-out forwards; }
+.fs-model .fs-fig { width: 230px; }
+@keyframes fswalk { 0% { opacity: 0; transform: translate(-50%, -260px) scale(.3); } 25% { opacity: 1; } 70% { opacity: 1; transform: translate(-50%, 0) scale(1); } 100% { opacity: 0; transform: translate(-50%, 0) scale(1.05); } }
+.fs-res { position: absolute; inset: 0; display: grid; place-content: center; justify-items: center; gap: 12px; color: #fff; text-align: center; padding: 20px; background: rgba(0,0,0,.35); animation: dmpop .4s; }
+/* منصة عرض احترافية: خلفية استوديو وإضاءة وأرضية لامعة */
+.fs-stage { background: radial-gradient(ellipse 70% 55% at 50% 28%, #fff 0%, #fdf2f8 35%, #f5d0e6 70%, #e9b8d4 100%); position: relative; overflow: hidden; box-shadow: inset 0 -60px 60px -40px rgba(131, 24, 67, .25), 0 10px 30px -12px rgba(131,24,67,.35); }
+.fs-stage::before { content: ''; position: absolute; left: 10%; right: 10%; top: 62%; height: 120px; background: radial-gradient(ellipse at 50% 20%, rgba(255,255,255,.9), rgba(255,255,255,0) 70%); pointer-events: none; }
+.fs-stage > * { position: relative; }
+.fs-fig { filter: drop-shadow(0 14px 18px rgba(131, 24, 67, .28)); }

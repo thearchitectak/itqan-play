@@ -1,0 +1,111 @@
+/* طبقة المؤثرات البصرية: عمق ثلاثي الأبعاد، وإضاءة، ولمعان لكل الألعاب.
+   تُحمَّل بعد style.css وتعمل فوق تصميم كل لعبة دون أن تغيّر منطقها. */
+:root {
+  --fx-raise: 0 1px 0 rgba(255,255,255,.65) inset, 0 -3px 0 rgba(0,0,0,.12) inset, 0 2px 3px rgba(16,24,40,.10), 0 10px 22px rgba(16,24,40,.12);
+  --fx-deep: 0 2px 4px rgba(0,0,0,.18), 0 12px 24px rgba(0,0,0,.22), 0 30px 60px -20px rgba(0,0,0,.35);
+}
+body { background: radial-gradient(1200px 600px at 85% -10%, rgba(99,102,241,.10), transparent 60%), radial-gradient(900px 500px at -10% 20%, rgba(245,158,11,.10), transparent 60%), var(--bg); background-attachment: fixed; }
+
+/* ===== بطاقات الألعاب في الصفحة الرئيسية: إمالة ثلاثية الأبعاد ولمعان ===== */
+.grid { perspective: 1400px; }
+.game-card { border-radius: 20px; border: 0; transform-style: preserve-3d; will-change: transform;
+  transform: rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg)) translateZ(0);
+  box-shadow: 0 1px 0 rgba(255,255,255,.8) inset, 0 0 0 1px rgba(16,24,40,.06), 0 4px 8px rgba(16,24,40,.06), 0 14px 30px -8px rgba(16,24,40,.16);
+  transition: transform .25s cubic-bezier(.2,.8,.2,1), box-shadow .25s; }
+.game-card:hover { transform: rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg)) translateY(-6px) scale(1.015);
+  box-shadow: 0 0 0 1px rgba(16,24,40,.05), 0 10px 20px rgba(16,24,40,.10), 0 30px 50px -12px rgba(16,24,40,.32); }
+.game-card .art { position: relative; overflow: hidden; }
+.game-card .art::before { content: ''; position: absolute; inset: 0; z-index: 2; pointer-events: none;
+  background: linear-gradient(180deg, rgba(255,255,255,.18), transparent 35%, transparent 70%, rgba(0,0,0,.22)); }
+.game-card .art::after { content: ''; position: absolute; inset: -20%; z-index: 3; pointer-events: none; transform: translateX(-110%) skewX(-18deg);
+  background: linear-gradient(90deg, transparent 35%, rgba(255,255,255,.45) 50%, transparent 65%); transition: transform .8s ease; }
+.game-card:hover .art::after { transform: translateX(110%) skewX(-18deg); }
+.game-card .art-svg svg { transform: translate(var(--mx, 0px), var(--my, 0px)) scale(1.08); transition: transform .3s ease-out; }
+.game-card:hover .art-svg svg { transform: translate(var(--mx, 0px), var(--my, 0px)) scale(1.14); }
+.game-card .body { background: linear-gradient(180deg, #fff, #fbfcfe); }
+.game-card .tag { box-shadow: 0 1px 0 rgba(255,255,255,.8) inset, 0 1px 2px rgba(0,0,0,.06); }
+.cat-chips button { box-shadow: var(--fx-raise); transition: transform .15s, box-shadow .15s; }
+.cat-chips button:active { transform: translateY(2px); }
+.hero h1 { text-shadow: 0 2px 0 #fff, 0 10px 30px rgba(99,102,241,.18); }
+.game-head .ic { box-shadow: var(--fx-deep); }
+@media (hover: none), (prefers-reduced-motion: reduce) { .game-card, .game-card:hover { transform: none; } .game-card .art::after { display: none; } }
+
+/* ===== الأزرار: بروز وضغط ===== */
+.btn:not(.ghost) { background-image: linear-gradient(180deg, rgba(255,255,255,.22), rgba(255,255,255,0) 55%, rgba(0,0,0,.08)); box-shadow: 0 1px 0 rgba(255,255,255,.35) inset, 0 -2px 0 rgba(0,0,0,.18) inset, 0 3px 8px rgba(16,24,40,.18); }
+.btn.ghost { box-shadow: 0 1px 0 #fff inset, 0 -2px 0 rgba(16,24,40,.06) inset, 0 2px 5px rgba(16,24,40,.08); }
+.btn:active:not(:disabled) { transform: translateY(2px); box-shadow: 0 1px 2px rgba(16,24,40,.2) inset; }
+.gk-bigbtn, .bl-bid { background-image: linear-gradient(180deg, rgba(255,255,255,.28), rgba(255,255,255,0) 50%, rgba(0,0,0,.10)); box-shadow: 0 1px 0 rgba(255,255,255,.4) inset, 0 -3px 0 rgba(0,0,0,.2) inset, 0 6px 14px rgba(0,0,0,.3); transition: transform .12s; }
+.gk-bigbtn:active:not(:disabled), .bl-bid:active:not(:disabled) { transform: translateY(3px); }
+.panel { box-shadow: 0 1px 0 #fff inset, 0 2px 4px rgba(16,24,40,.04), 0 18px 40px -16px rgba(16,24,40,.18); }
+.gk-plate { background: linear-gradient(180deg, #fff, #eef2f7); box-shadow: 0 1px 0 #fff inset, 0 -2px 0 rgba(0,0,0,.06) inset, 0 3px 8px rgba(0,0,0,.25); }
+.gk-mode { box-shadow: var(--fx-raise); }
+.gk-mode.on { box-shadow: 0 0 0 2px var(--primary), 0 12px 24px -10px var(--primary); }
+
+/* ===== النرد مجسّمًا ===== */
+.gk-die, .l-die { background: radial-gradient(circle at 30% 25%, #fff 0%, #f8fafc 45%, #d9dee7 100%) !important;
+  box-shadow: 0 1px 0 #fff inset, -3px -3px 6px rgba(0,0,0,.08) inset, 2px 2px 3px rgba(255,255,255,.9) inset, 0 3px 0 #b8c0cc, 0 6px 14px rgba(0,0,0,.35) !important; }
+.gk-die i.on, .l-die i.on { background: radial-gradient(circle at 35% 30%, #4b5563, #0b1220 70%) !important; box-shadow: 0 1px 0 rgba(255,255,255,.7); }
+
+/* ===== أوراق اللعب: ورق لامع بحواف بارزة ===== */
+.bc-card { background: linear-gradient(155deg, #ffffff 0%, #f9fafb 55%, #eceff4 100%);
+  box-shadow: 0 0 0 1px #cfd6e0 inset, 0 1px 0 #fff inset, 0 1px 1px rgba(0,0,0,.25), 0 4px 8px rgba(0,0,0,.22), 0 12px 20px -6px rgba(0,0,0,.35) !important; overflow: hidden; }
+.bc-card::after { content: ''; position: absolute; inset: 0; border-radius: inherit; pointer-events: none;
+  background: linear-gradient(125deg, rgba(255,255,255,.85) 0%, rgba(255,255,255,0) 32%), linear-gradient(0deg, rgba(0,0,0,.05), transparent 30%); }
+.bc-mid { text-shadow: 0 1px 0 rgba(255,255,255,.9), 0 3px 4px rgba(0,0,0,.22); }
+.bc-card.red .bc-mid { text-shadow: 0 1px 0 rgba(255,255,255,.9), 0 3px 5px rgba(200,30,30,.3); }
+.bc-back { background: radial-gradient(circle at 30% 20%, rgba(255,255,255,.35), transparent 45%), repeating-linear-gradient(45deg, #7f1d1d 0 3px, #9f1239 3px 6px) !important;
+  box-shadow: inset 0 0 0 2px #fecaca, inset 0 0 0 3px #7f1d1d, 0 2px 3px rgba(0,0,0,.45) !important; }
+.bl-hc.can:hover .bc-card, .bl-hc.sel .bc-card { box-shadow: 0 0 0 3px #facc15, 0 14px 24px -4px rgba(0,0,0,.55) !important; }
+.bl-hc.can .bc-card { box-shadow: 0 0 0 2px #facc15, 0 4px 8px rgba(0,0,0,.3), 0 12px 20px -6px rgba(0,0,0,.4) !important; }
+.bl-hc.dim .bc-card { filter: brightness(.6) saturate(.7); }
+/* اليد على شكل مروحة */
+.bl-hand .bl-hc { rotate: calc((var(--i, 0) - (var(--n, 1) - 1) / 2) * 1.6deg); transform-origin: 50% 160%; }
+.cx-hand.many .bl-hc { rotate: 0deg; }
+.bl-tc .bc-card { box-shadow: 0 0 0 1px #cfd6e0 inset, 0 10px 18px rgba(0,0,0,.45) !important; }
+/* طاولات الورق واللعب: لباد مع إضاءة مركزية وحافة خشبية */
+.bl-wrap, .tw-wrap, .dm-wrap { isolation: isolate; box-shadow: inset 0 0 0 5px rgba(60,30,10,.55), inset 0 0 0 7px rgba(255,255,255,.08), inset 0 0 160px rgba(0,0,0,.55); }
+.bl-wrap::before, .tw-wrap::before, .dm-wrap::before { content: ''; position: absolute; inset: 0; z-index: -1; pointer-events: none; opacity: .5; mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .5 0 0 0 0 .5 0 0 0 0 .5 0 0 0 .6 0'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)'/%3E%3C/svg%3E"),
+    radial-gradient(ellipse at 50% 40%, rgba(255,255,255,.18), transparent 60%); }
+.bl-score, .cx-panel { backdrop-filter: blur(6px); box-shadow: 0 1px 0 rgba(255,255,255,.15) inset, 0 8px 20px rgba(0,0,0,.35); }
+.cx-floor { box-shadow: inset 0 2px 10px rgba(0,0,0,.35), inset 0 0 0 2px rgba(255,255,255,.12); }
+.cx-meld { box-shadow: inset 0 1px 0 rgba(255,255,255,.12), 0 6px 14px rgba(0,0,0,.3); }
+
+/* ===== قطع SVG: دومينو عاجي، وأحجار طاولة مجسمة، ولوحات بسماكة ===== */
+.dm-tile .dm-face { fill: url(#fx-ivory) !important; filter: drop-shadow(0 .06px .02px rgba(255,255,255,.5)) drop-shadow(0 .12px .14px rgba(0,0,0,.55)) !important; }
+.dm-tile circle { filter: drop-shadow(0 .03px 0 rgba(255,255,255,.8)); }
+.tw-ck circle:first-child { filter: drop-shadow(0 .06px .08px rgba(0,0,0,.7)) !important; }
+.tw-svg, .c4-svg, .sn-board svg, .gn-board, .mboard, .xo-grid, .g2-board { filter: none; box-shadow: 0 2px 0 rgba(255,255,255,.4) inset, 0 6px 0 rgba(0,0,0,.18), 0 18px 34px rgba(0,0,0,.28); }
+.c4-svg { filter: drop-shadow(0 6px 0 rgba(0,0,80,.35)) drop-shadow(0 18px 24px rgba(0,0,0,.3)); box-shadow: none; border-radius: 0; }
+.xo-cell { box-shadow: 0 1px 0 #fff inset, 0 -4px 0 rgba(99,102,241,.12) inset, 0 3px 6px rgba(30,41,59,.12); transition: transform .12s; }
+.xo-cell:not(:disabled):hover { transform: translateY(-2px); }
+.xo-cell { text-shadow: 0 3px 0 rgba(0,0,0,.12), 0 6px 12px rgba(0,0,0,.15); }
+.g2-t { box-shadow: 0 1px 0 rgba(255,255,255,.45) inset, 0 -4px 0 rgba(0,0,0,.12) inset, 0 4px 8px rgba(0,0,0,.18); }
+.g2-board > i { box-shadow: inset 0 3px 6px rgba(0,0,0,.12); }
+.sd-cell, .wd-cell, .rb-cell, .rm-cell { box-shadow: 0 1px 0 rgba(255,255,255,.6) inset, 0 -2px 0 rgba(0,0,0,.06) inset; }
+.mcell { box-shadow: 0 1px 0 rgba(255,255,255,.45) inset, 0 -4px 0 rgba(0,0,0,.16) inset, 0 4px 8px rgba(0,0,0,.18); }
+.mcell:hover { transform: translateY(-2px); }
+canvas.jp-cv { box-shadow: 0 2px 0 rgba(255,255,255,.4) inset, 0 8px 0 rgba(0,0,0,.15), 0 24px 40px rgba(0,0,0,.3); }
+
+/* ===== مفتاح 2D / 3D ===== */
+.vt { display: inline-flex; background: #e5e7eb; border-radius: 99px; padding: 2px; gap: 2px; box-shadow: inset 0 1px 3px rgba(0,0,0,.15); direction: ltr; flex: none; }
+.vt button { border: 0; background: transparent; border-radius: 99px; padding: 3px 9px; font: 900 12px/1.2 system-ui, sans-serif; color: #475569; cursor: pointer; letter-spacing: .5px; }
+.vt button.on { background: linear-gradient(180deg, #fff, #eef2f7); color: var(--primary); box-shadow: 0 1px 0 #fff inset, 0 2px 5px rgba(0,0,0,.2); }
+.vt button:last-child.on { background: linear-gradient(135deg, #6366f1, #0ea5e9); color: #fff; text-shadow: 0 1px 1px rgba(0,0,0,.3); }
+
+/* ===== الوضع ثلاثي الأبعاد: لوحات مائلة بمنظور، وقطع مضاءة مجسّمة ===== */
+/* قطع مجسّمة بإضاءة لامعة */
+body.v3d .tw-ck, body.v3d .l-tok, body.v3d .c4-svg circle[r="4.4"], body.v3d .sn-board circle[r=".26"], body.v3d .dm-tile .dm-face { filter: url(#fx-bevel) !important; }
+body.v3d .gk-die, body.v3d .l-die { box-shadow: 0 1px 0 #fff inset, -4px -4px 8px rgba(0,0,0,.1) inset, 3px 0 0 #c3cad5, 3px 4px 0 #aab3c0, 0 12px 16px rgba(0,0,0,.4) !important; }
+body.v3d .g2-t { box-shadow: 0 1px 0 rgba(255,255,255,.6) inset, 0 -6px 0 rgba(0,0,0,.16) inset, 0 6px 0 rgba(0,0,0,.12), 0 10px 14px rgba(0,0,0,.22); }
+body.v3d .xo-cell { text-shadow: 0 2px 0 rgba(0,0,0,.18), 0 5px 0 rgba(0,0,0,.12), 0 10px 14px rgba(0,0,0,.25); }
+body.v3d .bc-card { box-shadow: 0 0 0 1px #cfd6e0 inset, 0 1px 0 #fff inset, 0 1px 0 #e5e7eb, 0 2px 0 #d1d5db, 0 3px 0 #b8c0cc, 0 6px 10px rgba(0,0,0,.3), 0 14px 22px -6px rgba(0,0,0,.4) !important; }
+body.v3d .bc-mid { text-shadow: 0 1px 0 rgba(255,255,255,.9), 1px 2px 0 rgba(0,0,0,.15), 2px 4px 5px rgba(0,0,0,.3); }
+body.v3d .bc-back { box-shadow: inset 0 0 0 2px #fecaca, inset 0 0 0 3px #7f1d1d, 0 1px 0 #5b1010, 0 2px 0 #4a0d0d, 0 4px 6px rgba(0,0,0,.5) !important; }
+body.v3d .dm-htile svg, body.v3d .dm-backs > * { filter: drop-shadow(1px 3px 0 #b9ad8c) drop-shadow(0 6px 6px rgba(0,0,0,.4)); }
+/* الشطرنج: لوحة بسماكة وقطع بظلال ساقطة (دون إمالة للحفاظ على دقة السحب) */
+body.v3d .cb { box-shadow: 0 0 0 6px #5b3a1e, 0 0 0 9px #3b2412, 0 18px 0 6px #2a190c, 0 40px 50px rgba(0,0,0,.5); border-radius: 4px; }
+body.v3d .cb .pc { filter: drop-shadow(3px 6px 3px rgba(0,0,0,.45)) drop-shadow(0 1px 0 rgba(255,255,255,.3)); }
+body.v3d .game-card .art-svg svg { filter: drop-shadow(0 6px 6px rgba(0,0,0,.18)); }
+@media (prefers-reduced-motion: reduce) { body.v3d * { transition: none !important; } }
+/* لوحة «أربعة في صف» بلاستيك لامع بحواف ثقوب مجسمة (اللوحة نفسها مسطحة) */

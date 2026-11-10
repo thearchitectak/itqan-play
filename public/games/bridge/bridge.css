@@ -1,0 +1,12 @@
+.br { display: grid; gap: 12px; }
+.br-stage { width: 100%; }
+.br-cv { width: 100%; height: auto; display: block; border-radius: 20px; box-shadow: var(--shadow-lg); cursor: crosshair; touch-action: manipulation; }
+.br-panel { display: grid; gap: 10px; }
+.br-levels { display: flex; gap: 6px; } .br-levels button { width: 42px; height: 42px; border-radius: 12px; border: 2px solid var(--line); background: #fff; font-weight: 900; cursor: pointer; } .br-levels button.on { border-color: var(--primary); background: var(--primary-50); } .br-levels button:disabled { opacity: .35; }
+.br-money { font-weight: 900; font-size: 17px; } .br-money.over { color: #dc2626; }
+.br-row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.br-mats { display: flex; gap: 6px; flex-wrap: wrap; }
+.br-mat { display: grid; justify-items: center; gap: 2px; border: 2px solid var(--line); background: #fff; border-radius: 12px; padding: 6px 10px; cursor: pointer; min-width: 70px; }
+.br-mat i { width: 34px; height: 8px; border-radius: 4px; } .br-mat span { font-weight: 800; font-size: 13px; } .br-mat small { color: var(--ink-3); font-size: 11px; }
+.br-mat.on { border-color: var(--primary); background: var(--primary-50); }
+.br-tip { margin: 0; background: #fff7ed; border-radius: 12px; padding: 10px 14px; }

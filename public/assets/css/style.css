@@ -135,3 +135,13 @@ dialog.modal::backdrop { background: rgba(15, 23, 42, .5); }
   body { background: #fff; }
 }
 .swatch { display: inline-block; width: 22px; height: 22px; border-radius: 5px; vertical-align: middle; border: 1px solid rgba(0,0,0,.15); }
+
+/* أغلفة الألعاب المرسومة والتصنيفات */
+.game-card .art.has-svg { height: 150px; display: block; overflow: hidden; }
+.game-card .art-svg, .game-card .art-svg svg { width: 100%; height: 100%; display: block; transition: transform .35s; }
+.game-card:hover .art-svg svg { transform: scale(1.06); }
+.game-head .ic.has-svg { overflow: hidden; padding: 0; } .game-head .ic.has-svg .art-svg, .game-head .ic.has-svg svg { width: 100%; height: 100%; display: block; }
+.cat-chips { display: flex; gap: 8px; flex-wrap: wrap; margin: -6px 0 16px; }
+.cat-chips button { border: 1px solid var(--line); background: #fff; border-radius: 99px; padding: 8px 14px; font-weight: 800; cursor: pointer; font-size: 14px; }
+.cat-chips button small { color: var(--ink-3); font-weight: 700; }
+.cat-chips button.on { background: var(--primary); color: #fff; border-color: var(--primary); } .cat-chips button.on small { color: #d1fae5; }

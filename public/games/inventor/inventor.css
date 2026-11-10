@@ -1,0 +1,16 @@
+.iv { display: grid; gap: 12px; }
+.iv-main { display: grid; grid-template-columns: minmax(0, 1fr) minmax(250px, 320px); gap: 16px; align-items: start; }
+@media (max-width: 860px) { .iv-main { grid-template-columns: 1fr; } }
+.iv-left { display: grid; gap: 8px; }
+.iv-board { width: 100%; height: auto; display: block; border-radius: 20px; box-shadow: var(--shadow-lg); direction: ltr; }
+.iv-slot { stroke: rgba(255,255,255,.05); stroke-width: 26; cursor: pointer; }
+.iv-slot:hover { stroke: rgba(250,204,21,.3); }
+.iv-comp { pointer-events: none; }
+.iv-flow { stroke-dasharray: 10 8; animation: ivflow .6s linear infinite; } @keyframes ivflow { to { stroke-dashoffset: -18; } }
+.iv-glow { pointer-events: none; animation: ivglow 1.2s ease-in-out infinite; } @keyframes ivglow { 50% { opacity: .45; } }
+.iv-spin { transform-box: fill-box; transform-origin: center; animation: ivspin .6s linear infinite; } @keyframes ivspin { to { rotate: 360deg; } }
+.iv-shake { animation: shake .2s infinite; }
+.iv-right { display: grid; gap: 10px; }
+.iv-tools { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+.iv-tool { display: grid; justify-items: center; gap: 2px; border: 2px solid var(--line); background: #fff; border-radius: 12px; padding: 8px 4px; cursor: pointer; }
+.iv-tool span { font-size: 24px; } .iv-tool small { font-size: 11px; font-weight: 700; text-align: center; } .iv-tool.on { border-color: var(--primary); background: var(--primary-50); }

@@ -13,10 +13,29 @@ export function loadPeer() {
   });
   return loading;
 }
-function openPeer(id) {
+// خوادم ICE (STUN/TURN) من دالة الموقع /api/turn، مع بديل افتراضي إن تعذر الوصول إليها
+let iceP = null;
+export function iceServers() {
+  if (!iceP) iceP = (async () => {
+    try {
+      const ctl = new AbortController(); const tm = setTimeout(() => ctl.abort(), 3500);
+      const r = await fetch('/api/turn', { signal: ctl.signal }); clearTimeout(tm);
+      if (!r.ok) throw 0; const d = await r.json();
+      if (Array.isArray(d.iceServers) && d.iceServers.length) return d.iceServers;
+    } catch { }
+    iceP = null;
+    return null;
+  })();
+  return iceP;
+}
+async function openPeer(id) {
+  // يمكن تحديد خادم PeerJS خاص بتعريف window.ITQAN_PEER_CONFIG
+  const opts = { debug: 0, ...(window.ITQAN_PEER_CONFIG || {}) };
+  if (!opts.config) {
+    const ice = await iceServers();
+    if (ice) opts.config = { iceServers: [...ice, { urls: 'stun:stun.l.google.com:19302' }] };
+  }
   return new Promise((resolve, reject) => {
-    // يمكن تحديد خادم PeerJS خاص بتعريف window.ITQAN_PEER_CONFIG
-    const opts = { debug: 0, ...(window.ITQAN_PEER_CONFIG || {}) };
     const peer = id ? new window.Peer(id, opts) : new window.Peer(opts);
     const to = setTimeout(() => fail(Object.assign(new Error('timeout'), { type: 'timeout' })), 12000);
     const fail = (e) => { clearTimeout(to); try { peer.destroy(); } catch { } reject(e); };

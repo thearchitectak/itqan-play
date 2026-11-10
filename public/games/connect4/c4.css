@@ -1,0 +1,12 @@
+.c4-wrap { position: absolute; inset: 0; display: grid; grid-template-rows: auto minmax(0, 1fr); justify-items: center; padding: 8px; gap: 6px; }
+.c4-side { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
+.c4-svg { width: min(100%, (100cqh - 60px) * 1.12); height: auto; max-height: 100%; align-self: center; filter: drop-shadow(0 10px 22px rgba(0,0,0,.25)); }
+.c4-col .c4-ghost { opacity: 0; transition: opacity .15s; }
+.c4-col.can { cursor: pointer; }
+.c4-col.can:hover .c4-ghost { opacity: .85; }
+@media (hover: none) { .c4-col.can .c4-ghost { opacity: .35; } }
+.c4-drop { animation: c4fall .35s cubic-bezier(.5,0,.75,0) both; }
+@keyframes c4fall { from { transform: translateY(var(--fall)); } }
+.c4-win { animation: c4glow .8s ease-in-out infinite; }
+@keyframes c4glow { 50% { stroke-width: 2.2; } }
+.c4-dot { width: 14px; height: 14px; border-radius: 50%; display: inline-block; }

@@ -1,0 +1,11 @@
+.ir { display: grid; gap: 14px; }
+.ir-top { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; justify-content: space-between; }
+.ir-sc { background: #fff; border-radius: 99px; padding: 6px 14px; box-shadow: var(--shadow); }
+.ir-play { display: grid; gap: 14px; justify-items: center; background: linear-gradient(180deg, #faf5ff, #fff); border-radius: 22px; padding: 22px; }
+.ir-s { font-size: clamp(26px, 5vw, 40px); font-weight: 800; margin: 0; line-height: 1.8; text-align: center; }
+.ir-s mark { background: #e9d5ff; color: #6b21a8; border-radius: 10px; padding: 0 8px; }
+.ir-opts { display: grid; gap: 8px; width: min(700px, 100%); }
+.ir-opt { border: 2px solid var(--line); background: #fff; border-radius: 14px; padding: 12px 16px; font-size: 17px; font-weight: 700; cursor: pointer; text-align: start; }
+.ir-opt:not(:disabled):hover { border-color: #9333ea; } .ir-opt.ok { background: #dcfce7; border-color: #22c55e; }
+.ir-res { width: min(700px, 100%); border-radius: 16px; padding: 12px 16px; animation: dmpop .3s; } .ir-res.ok { background: #dcfce7; } .ir-res.bad { background: #fee2e2; }
+.ir-res p { margin: 6px 0; }

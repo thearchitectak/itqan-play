@@ -1,0 +1,10 @@
+.g2 { display: grid; gap: 14px; justify-items: center; }
+.g2-top { display: flex; gap: 10px; flex-wrap: wrap; align-items: end; justify-content: center; }
+.g2-box { background: #bbada0; color: #fff; border-radius: 10px; padding: 4px 14px; text-align: center; min-width: 80px; } .g2-box b { display: block; font-size: 22px; }
+.g2-board { --s: min(88vw, 440px); position: relative; width: var(--s); height: var(--s); background: #bbada0; border-radius: 14px; padding: calc(var(--s) * .025); display: grid; grid-template-columns: repeat(4, 1fr); gap: calc(var(--s) * .025); direction: ltr; touch-action: none; }
+.g2-board > i { background: rgba(238, 228, 218, .35); border-radius: 8px; }
+.g2-t { position: absolute; width: calc(var(--s) * .2125); height: calc(var(--s) * .2125); left: calc(var(--s) * .025 + var(--c) * var(--s) * .2375); top: calc(var(--s) * .025 + var(--r) * var(--s) * .2375); border-radius: 8px; display: grid; place-items: center; font-weight: 900; font-size: calc(var(--s) * .035); transition: left .1s, top .1s; }
+.g2-t.nw { animation: g2in .2s; } .g2-t.mg { animation: g2pop .2s; }
+@keyframes g2in { from { transform: scale(0); } } @keyframes g2pop { 50% { transform: scale(1.18); } }
+.g2-msg { position: absolute; inset: 0; border-radius: 14px; background: rgba(238, 228, 218, .8); display: none; place-items: center; text-align: center; font-size: 26px; font-weight: 900; color: #776e65; padding: 20px; }
+.g2-msg.on { display: grid; animation: dmpop .3s; }

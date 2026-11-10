@@ -1,0 +1,6 @@
+.zu { display: grid; gap: 10px; }
+.zu-top { display: flex; gap: 12px; align-items: end; flex-wrap: wrap; } .zu-lv { font-size: 20px; margin-inline-end: auto; }
+.zu-stage { position: relative; width: min(100%, 900px); margin: 0 auto; }
+.zu-cv { width: 100%; height: auto; display: block; border-radius: 22px; box-shadow: var(--shadow-lg); touch-action: none; cursor: crosshair; }
+.zu-msg { position: absolute; inset: 0; display: none; place-content: center; justify-items: center; gap: 12px; background: rgba(0,0,0,.45); border-radius: 22px; color: #fff; text-align: center; }
+.zu-msg.on { display: grid; }

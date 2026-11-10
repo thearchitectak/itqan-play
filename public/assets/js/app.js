@@ -1,6 +1,7 @@
 // الواجهة الرئيسية: الترويسة، التنقل بين الصفحات، الصفحة الرئيسية، الإعدادات، الملف التعريفي والدعم.
-import { h, ico, $, t, tr, settings, setSetting, applyLang, num, modal, toast, copyText, sound, onSettings, store, displayName } from './core.js';
+import { h, ico, $, t, tr, settings, setSetting, applyLang, num, modal, toast, copyText, sound, onSettings, store, displayName, viewToggle, applyView } from './core.js';
 import { GAMES } from './games.js';
+import { ART } from './art.js';
 import { SITE_CONFIG } from './site-config.js';
 import { BRANDS, BRAND_ORDER } from './brands.js';
 
@@ -81,6 +82,7 @@ function header() {
       h('a', { href: '#home' }, ico('house', 18), h('span', { class: 'lbl' }, t('games'))),
       h('a', { href: '#about-me' }, ico('user-round', 18), h('span', { class: 'lbl' }, t('about'))),
       h('a', { href: '#support-us' }, ico('heart', 18), h('span', { class: 'lbl' }, t('support'))),
+      viewToggle(),
       h('button', { type: 'button', onclick: openSettings, title: t('settings') }, ico('settings', 18), h('span', { class: 'lbl' }, t('settings'))),
       h('button', { type: 'button', title: t('language'), onclick: () => setSetting('lang', settings.lang === 'ar' ? 'en' : 'ar') }, ico('languages', 18), h('span', {}, settings.lang === 'ar' ? 'EN' : 'ع')))));
 }
@@ -120,24 +122,49 @@ export function openSettings() {
 }
 
 // ---------- الصفحات ----------
+// تصنيفات الصفحة الرئيسية
+const CATS = [
+  ['all', { ar: 'كل الألعاب', en: 'All games' }, '✨', null],
+  ['online', { ar: 'جماعية وأونلاين', en: 'Multiplayer & online' }, '🌐', ['multiplication', 'chess', 'ludo', 'domino', 'tawla', 'baloot', 'genius', 'connect4', 'xo', 'snakes', 'draw', 'basra', 'shayeb', 'tarneeb', 'likha', 'trix', 'hand']],
+  ['cards', { ar: 'الكوتشينة', en: 'Card games' }, '🃏', ['baloot', 'basra', 'shayeb', 'tarneeb', 'likha', 'trix', 'hand']],
+  ['action', { ar: 'مغامرات وحركة', en: 'Action & adventure' }, '🏃', ['jumper', 'runner', 'fish', 'zuma']],
+  ['board', { ar: 'ألعاب الطاولة', en: 'Board games' }, '🎲', ['chess', 'ludo', 'domino', 'tawla', 'connect4', 'xo', 'snakes']],
+  ['math', { ar: 'الرياضيات', en: 'Math' }, '🔢', ['multiplication', 'fractions', 'clock', 'g2048', 'sudoku', 'domino', 'snakes', 'business', 'basra']],
+  ['lang', { ar: 'اللغة العربية', en: 'Arabic' }, '📚', ['words', 'irab', 'draw', 'genius']],
+  ['sci', { ar: 'العلوم والهندسة', en: 'Science & engineering' }, '🔬', ['bridge', 'inventor', 'architect', 'robot', 'city', 'geo']],
+  ['logic', { ar: 'التفكير والألغاز', en: 'Logic & puzzles' }, '🧩', ['chess', 'chesslearn', 'sudoku', 'shapes', 'escape', 'robot', 'zuma', 'connect4', 'xo']],
+  ['create', { ar: 'التصميم والإبداع', en: 'Design & creativity' }, '🎨', ['fashion', 'room', 'architect', 'draw', 'business', 'city']],
+];
+let homeCat = 'all';
+function artFor(g) {
+  const s = ART[g.id]; if (!s) return null;
+  const el = h('div', { class: 'art-svg', html: s.replace(/id="([\w-]+)"/g, `id="${g.id}-$1"`).replace(/url\(#([\w-]+)\)/g, `url(#${g.id}-$1)`) });
+  return el;
+}
 function homeView() {
-  const grid = h('div', { class: 'grid' }, GAMES.map(g => h(g.status === 'ready' ? 'a' : 'div', { class: 'game-card' + (g.status !== 'ready' ? ' soon' : ''), href: g.status === 'ready' ? '#' + g.id : null },
-    h('div', { class: 'art', style: { background: g.color } }, ico(g.icon, 56)),
-    g.status !== 'ready' ? h('span', { class: 'badge' }, t('soon')) : null,
-    h('div', { class: 'body' },
-      h('small', { class: 'muted', style: { fontWeight: 700 } }, tr(g.field)),
-      h('h3', {}, tr(g.title)), h('p', {}, tr(g.desc)),
-      h('div', { class: 'tags' }, h('span', { class: 'tag' }, ico('users', 13), ' ', tr(g.players)), (g.tags || []).map(x => h('span', { class: 'tag' }, tr(x))))))));
+  const list = GAMES.filter(g => g.status === 'ready');
+  const grid = h('div', { class: 'grid' });
+  const fill = () => {
+    const c = CATS.find(x => x[0] === homeCat); grid.innerHTML = '';
+    for (const g of list.filter(g => !c[3] || c[3].includes(g.id))) grid.append(h('a', { class: 'game-card', href: '#' + g.id },
+      h('div', { class: 'art' + (ART[g.id] ? ' has-svg' : ''), style: { background: g.color } }, artFor(g) || ico(g.icon, 56)),
+      h('div', { class: 'body' },
+        h('small', { class: 'muted', style: { fontWeight: 700 } }, tr(g.field)),
+        h('h3', {}, tr(g.title)), h('p', {}, tr(g.desc)),
+        h('div', { class: 'tags' }, h('span', { class: 'tag' }, ico('users', 13), ' ', tr(g.players)), (g.tags || []).map(x => h('span', { class: 'tag' }, tr(x)))))));
+  };
+  const chips = h('div', { class: 'cat-chips' }, CATS.map(([k, n, ic, ids]) => h('button', { type: 'button', class: k === homeCat ? 'on' : '', onclick: (e) => { homeCat = k; chips.querySelectorAll('button').forEach(b => b.classList.toggle('on', b === e.currentTarget)); fill(); } }, ic, ' ', tr(n), h('small', {}, ' ', num(ids ? list.filter(g => ids.includes(g.id)).length : list.length)))));
+  fill();
   return h('div', { class: 'container' },
     h('section', { class: 'hero' }, h('span', { class: 'kicker' }, ico('sparkles', 16), t('heroKicker')), h('h1', { html: t('heroTitle') }), h('p', {}, t('heroText'))),
-    h('h2', { class: 'section-title' }, ico('gamepad-2', 22), t('gamesTitle')), grid,
+    h('h2', { class: 'section-title' }, ico('gamepad-2', 22), t('gamesTitle'), h('small', { class: 'muted', style: { fontSize: '15px' } }, ' (', num(list.length), ')')), chips, grid,
     h('div', { class: 'about-grid', id: 'about-me' }, profileCard(), h('div', { id: 'support-us' }, donationCard())));
 }
 
 function gameHead(g) {
   return h('div', { class: 'game-headbox no-print' },
     h('div', { class: 'crumbs' }, h('a', { href: '#home' }, t('home')), ' / ', tr(g.title)),
-    h('div', { class: 'game-head' }, h('span', { class: 'ic', style: { background: g.color } }, ico(g.icon, 26)), h('div', { class: 'grow' }, h('h1', {}, tr(g.title)), h('p', {}, tr(g.desc)))));
+    h('div', { class: 'game-head' }, h('span', { class: 'ic' + (ART[g.id] ? ' has-svg' : ''), style: { background: g.color } }, artFor(g) || ico(g.icon, 26)), h('div', { class: 'grow' }, h('h1', {}, tr(g.title)), h('p', {}, tr(g.desc)))));
 }
 async function gameView(g, root) {
   const box = h('div', { class: 'container game-page' },
@@ -187,6 +214,19 @@ window.addEventListener('hashchange', () => {
   lastRoute = route; render();
 });
 onSettings((k) => { if (k === 'lang' || k === 'digits') { if (current?.onLang) { applyLang(); const app = $('#app'); app.querySelector('.site-header')?.replaceWith(header()); app.querySelector('.site-footer')?.replaceWith(footer()); const g = GAMES.find(x => x.id === lastRoute); if (g) { app.querySelector('.game-headbox')?.replaceWith(gameHead(g)); document.title = `${tr(g.title)} — ${t('siteName')}`; } current.onLang(); } else render(); } else current?.onSettings?.(k); });
+
+// ===== مؤثرات العمق: تدرجات SVG مشتركة وإمالة بطاقات الألعاب =====
+document.body.insertAdjacentHTML('afterbegin', '<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs><linearGradient id="fx-ivory" x1="0" y1="0" x2=".3" y2="1"><stop offset="0" stop-color="#fffefa"/><stop offset=".6" stop-color="#f7f0dc"/><stop offset="1" stop-color="#e6dabb"/></linearGradient><filter id="fx-bevel" primitiveUnits="objectBoundingBox" x="-15%" y="-15%" width="130%" height="140%"><feGaussianBlur in="SourceAlpha" stdDeviation=".06" result="b"/><feSpecularLighting in="b" surfaceScale="4" specularConstant="1.3" specularExponent="40" lighting-color="#ffffff" result="s"><feDistantLight azimuth="235" elevation="40"/></feSpecularLighting><feComposite in="s" in2="SourceAlpha" operator="in" result="s2"/><feComposite in="SourceGraphic" in2="s2" operator="arithmetic" k1="0" k2="1" k3=".85" k4="0" result="lit"/><feGaussianBlur in="SourceAlpha" stdDeviation=".05" result="sh"/><feOffset in="sh" dx=".02" dy=".09" result="sho"/><feComponentTransfer in="sho" result="sha"><feFuncA type="linear" slope=".55"/></feComponentTransfer><feMerge><feMergeNode in="sha"/><feMergeNode in="lit"/></feMerge></filter><filter id="fx-wood" x="0" y="0" width="1" height="1"><feTurbulence type="fractalNoise" baseFrequency=".18 3.2" numOctaves="3" seed="7" result="t"/><feColorMatrix in="t" type="matrix" values="0 0 0 0 .22  0 0 0 0 .11  0 0 0 0 .03  0 0 0 -2.2 1.35" result="w"/><feComposite in="w" in2="SourceAlpha" operator="in" result="w2"/><feMerge><feMergeNode in="SourceGraphic"/><feMergeNode in="w2"/></feMerge></filter><radialGradient id="fx-gloss" cx=".35" cy=".3" r=".7"><stop offset="0" stop-color="#fff" stop-opacity=".6"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></radialGradient></defs></svg>');
+applyView(); onSettings((k) => { if (k === 'view') applyView(); });
+if (matchMedia('(hover: hover)').matches && !matchMedia('(prefers-reduced-motion: reduce)').matches) {
+  document.addEventListener('pointermove', (e) => {
+    const c = e.target.closest?.('.game-card'); if (!c) return;
+    const r = c.getBoundingClientRect(), x = (e.clientX - r.left) / r.width - .5, y = (e.clientY - r.top) / r.height - .5;
+    c.style.setProperty('--ry', (x * 10).toFixed(2) + 'deg'); c.style.setProperty('--rx', (-y * 8).toFixed(2) + 'deg');
+    c.style.setProperty('--mx', (-x * 10).toFixed(1) + 'px'); c.style.setProperty('--my', (-y * 8).toFixed(1) + 'px');
+  });
+  document.addEventListener('pointerout', (e) => { const c = e.target.closest?.('.game-card'); if (c && !c.contains(e.relatedTarget)) ['--rx', '--ry', '--mx', '--my'].forEach(k => c.style.removeProperty(k)); });
+}
 
 lastRoute = location.hash.slice(1).split('-')[0] || 'home';
 loadShared().finally(render);
