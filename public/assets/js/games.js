@@ -264,4 +264,10 @@ export const GAMES = [
     desc: { ar: "رزمتان وجوكران: كوّن المجموعات والسلاسل، وانزل بـ51 نقطة على الأقل، وأنهِ أوراقك أولًا. ومن ينزل كل أوراقه دفعة واحدة يحقق «هاند».", en: "Two decks and jokers: build sets and runs, open with 51 and go out first." },
     players: { ar: "من 2 إلى 4 لاعبين", en: "2–4 players" }, tags: [{ ar: "أونلاين", en: "Online" }, { ar: "مجموعات", en: "Melds" }],
   },
+  {
+    id: 'bank', module: '../../games/bank/game.js', icon: 'landmark', color: '#b91c1c', solid: '#b91c1c', status: 'ready',
+    field: { ar: "جماعية", en: "Multiplayer" }, title: { ar: "بنك الحظ", en: "Fortune Bank" },
+    desc: { ar: "لعبة العقارات الشهيرة: ارمِ النردين واشترِ المدن العربية والمطارات والشركات، واجمع الإيجار، وابنِ البيوت والفنادق، واحذر السجن وبطاقات الحظ.", en: "The classic property game with Arab cities: buy, rent, build and avoid jail." },
+    players: { ar: "من 2 إلى 4 لاعبين", en: "2–4 players" }, tags: [{ ar: "أونلاين", en: "Online" }, { ar: "حساب المال", en: "Money math" }],
+  },
 ];

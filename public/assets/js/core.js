@@ -178,3 +178,13 @@ export function viewToggle() {
   const off = onSettings((k) => { if (k !== 'view') return; if (!box.isConnected) { off(); return; } box.replaceChildren(...mk().childNodes); });
   return box;
 }
+// لمعة كروية داخل SVG نفسه (تعمل على كل المتصفحات، ومنها سفاري على الهاتف)
+let glossN = 0;
+export function gloss(svg) {
+  if (svg._gloss) return svg._gloss;
+  const NS = 'http://www.w3.org/2000/svg'; let defs = svg.querySelector('defs'); if (!defs) { defs = document.createElementNS(NS, 'defs'); svg.prepend(defs); }
+  const id = 'gls' + (++glossN); const g = document.createElementNS(NS, 'radialGradient');
+  for (const [k, v] of [['id', id], ['cx', '.35'], ['cy', '.3'], ['r', '.75']]) g.setAttribute(k, v);
+  for (const [o, c, a] of [[0, '#fff', .85], [.25, '#fff', .25], [.6, '#000', 0], [1, '#000', .45]]) { const st = document.createElementNS(NS, 'stop'); st.setAttribute('offset', o); st.setAttribute('stop-color', c); st.setAttribute('stop-opacity', a); g.append(st); }
+  defs.append(g); svg._gloss = `url(#${id})`; return svg._gloss;
+}

@@ -1,6 +1,7 @@
 // مغامرات فرفور: لعبة منصات وقفز بأسلوب ألعاب المغامرات الكلاسيكية — جري وقفز وعملات وصناديق مفاجآت وأعداء وعلَم نهاية المرحلة.
 // الشخصية والمراحل والرسوم أصلية بالكامل ومرسومة بالكود.
 import { h, t, addDict, sound, num, store, is3d } from '../../assets/js/core.js';
+import { joystick, holdBtn } from '../../assets/js/vpad.js';
 addDict({
   ar: { jp_start: 'ابدأ المغامرة', jp_level: 'المرحلة {n}', jp_lives: 'الأرواح', jp_coins: 'العملات', jp_win: 'وصلت إلى العلَم! 🎉', jp_next: 'المرحلة التالية', jp_over: 'انتهت المحاولات', jp_retry: 'العب من جديد', jp_done: 'أكملت كل المراحل! أنت بطل المغامرات 🏆',
     jp_help: 'الحاسوب: الأسهم أو A/D للحركة، والمسافة أو ↑ للقفز، وShift للجري. الهاتف: استخدم الأزرار على الشاشة.', jp_q: 'صندوق المعرفة', jp_paused: 'متوقف مؤقتًا' },
@@ -230,8 +231,8 @@ export async function mount(root) {
   const kd = (e) => { if (!view.isConnected) return; if (['ArrowLeft', 'ArrowRight', 'ArrowUp', ' ', 'ArrowDown'].includes(e.key)) e.preventDefault(); keys[e.key.length === 1 ? e.key.toLowerCase() : e.key] = true; if (e.key === 'Shift') keys.Shift = true; };
   const ku = (e) => { keys[e.key.length === 1 ? e.key.toLowerCase() : e.key] = false; if (e.key === 'Shift') keys.Shift = false; };
   window.addEventListener('keydown', kd); window.addEventListener('keyup', ku);
-  const pad = (k, label, cls = '') => { const b = h('button', { type: 'button', class: 'jp-pad ' + cls }, label); const on = (v) => (e) => { e.preventDefault(); keys[k] = v; if (k === 'ArrowRight' || k === 'ArrowLeft') keys.Shift = v; }; b.addEventListener('pointerdown', on(true)); b.addEventListener('pointerup', on(false)); b.addEventListener('pointerleave', on(false)); b.addEventListener('pointercancel', on(false)); return b; };
-  view.append(h('div', { class: 'jp-stage' }, cv, msg, h('div', { class: 'jp-pads' }, h('div', {}, pad('ArrowLeft', '◀'), pad('ArrowRight', '▶')), pad(' ', '⤒', 'jump'))));
+  const stick = joystick({ onMove: (x) => { keys.ArrowLeft = x < -.3; keys.ArrowRight = x > .3; keys.Shift = Math.abs(x) > .85; } });
+  view.append(h('div', { class: 'jp-stage' }, cv, msg), h('div', { class: 'jp-pads' }, h('div', { class: 'jp-btns' }, holdBtn('⤒', '', () => { keys[' '] = true; }, () => { keys[' '] = false; })), stick));
   draw(); ui(); loop();
   return { unmount() { cancelAnimationFrame(raf); window.removeEventListener('keydown', kd); window.removeEventListener('keyup', ku); } };
 }

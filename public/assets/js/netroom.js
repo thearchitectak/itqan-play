@@ -55,6 +55,16 @@ export class HostRoom {
       try { this.peer = await openPeer(PREFIX + this.game + '-' + code); this.code = code; break; }
       catch (e) { if (e?.type !== 'unavailable-id' || i === 3) throw e; }
     }
+    // على الهاتف: حين يفتح المضيف واتساب لإرسال الدعوة يُعلَّق المتصفح وينقطع اتصاله بخادم الإشارة،
+    // فلا يجد الضيوف الغرفة. نعيد الاتصال تلقائيًا بالمعرّف نفسه، ونبقي الشاشة مضاءة أثناء الاستضافة.
+    const heal = () => { if (this.closed || !this.peer || this.peer.destroyed) return; if (this.peer.disconnected) { try { this.peer.reconnect(); } catch { } } };
+    this.peer.on('disconnected', () => { setTimeout(heal, 800); });
+    this._vis = () => { if (document.visibilityState === 'visible') { heal(); this._wake(); } };
+    document.addEventListener('visibilitychange', this._vis);
+    window.addEventListener('online', this._vis); window.addEventListener('focus', this._vis);
+    this._hb = setInterval(heal, 5000);
+    this._wake = async () => { try { if ('wakeLock' in navigator && !this._lock) { this._lock = await navigator.wakeLock.request('screen'); this._lock.addEventListener?.('release', () => { this._lock = null; }); } } catch { } };
+    this._wake();
     this.peer.on('connection', (conn) => {
       conn.on('data', (msg) => {
         if (msg?.type === 'hello') {
@@ -74,13 +84,20 @@ export class HostRoom {
   }
   send(id, msg) { try { const c = this.conns.get(id); c?.open && c.send(msg); } catch { } }
   broadcast(msg) { for (const id of this.conns.keys()) this.send(id, msg); }
-  close() { this.closed = true; for (const c of this.conns.values()) { try { c.close(); } catch { } } try { this.peer?.destroy(); } catch { } }
+  close() { this.closed = true; clearInterval(this._hb); document.removeEventListener('visibilitychange', this._vis); window.removeEventListener('online', this._vis); window.removeEventListener('focus', this._vis); try { this._lock?.release(); } catch { } for (const c of this.conns.values()) { try { c.close(); } catch { } } try { this.peer?.destroy(); } catch { } }
 }
 
 export class GuestRoom {
   // h: { onMessage(msg), onLeave() }
   constructor(game, h) { this.game = game; this.h = h; this.closed = false; }
   async join(code, password, info) {
+    // نعيد المحاولة إن كان المضيف يعيد اتصاله للتو (هاتف خرج من الخلفية)
+    for (let i = 0; ; i++) {
+      try { return await this._join(code, password, info); }
+      catch (e) { if (i >= 3 || !['peer-unavailable', 'timeout', 'network', 'server-error', 'socket-error'].includes(e?.type) || this.closed) throw e; try { this.peer?.destroy(); } catch { } await new Promise(r => setTimeout(r, 2500)); }
+    }
+  }
+  async _join(code, password, info) {
     await loadPeer();
     this.peer = await openPeer(undefined);
     return new Promise((resolve, reject) => {
@@ -90,7 +107,7 @@ export class GuestRoom {
       conn.on('open', () => conn.send({ type: 'hello', password, info }));
       conn.on('data', (msg) => {
         if (msg?.type === 'denied') { clearTimeout(to); reject(Object.assign(new Error(msg.reason), { type: 'denied-' + msg.reason })); return; }
-        if (msg?.type === 'welcome') { clearTimeout(to); this.conn = conn; this.id = msg.id; resolve(msg.id); return; }
+        if (msg?.type === 'welcome') { clearTimeout(to); this.conn = conn; this.id = msg.id; const heal = () => { if (!this.closed && this.peer && !this.peer.destroyed && this.peer.disconnected) { try { this.peer.reconnect(); } catch { } } }; this.peer.on('disconnected', () => setTimeout(heal, 800)); this._hb = setInterval(heal, 5000); resolve(msg.id); return; }
         if (this.conn) this.h.onMessage?.(msg);
       });
       const gone = () => { if (!this.closed && this.conn) this.h.onLeave?.(); };
@@ -98,7 +115,7 @@ export class GuestRoom {
     });
   }
   send(msg) { try { this.conn?.open && this.conn.send(msg); } catch { } }
-  close() { this.closed = true; try { this.conn?.close(); } catch { } try { this.peer?.destroy(); } catch { } }
+  close() { this.closed = true; clearInterval(this._hb); try { this.conn?.close(); } catch { } try { this.peer?.destroy(); } catch { } }
 }
 
 // تحويل أخطاء الاتصال إلى مفاتيح رسائل

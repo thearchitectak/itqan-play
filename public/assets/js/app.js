@@ -125,11 +125,11 @@ export function openSettings() {
 // تصنيفات الصفحة الرئيسية
 const CATS = [
   ['all', { ar: 'كل الألعاب', en: 'All games' }, '✨', null],
-  ['online', { ar: 'جماعية وأونلاين', en: 'Multiplayer & online' }, '🌐', ['multiplication', 'chess', 'ludo', 'domino', 'tawla', 'baloot', 'genius', 'connect4', 'xo', 'snakes', 'draw', 'basra', 'shayeb', 'tarneeb', 'likha', 'trix', 'hand']],
+  ['online', { ar: 'جماعية وأونلاين', en: 'Multiplayer & online' }, '🌐', ['multiplication', 'chess', 'ludo', 'domino', 'tawla', 'baloot', 'genius', 'connect4', 'xo', 'snakes', 'draw', 'bank', 'basra', 'shayeb', 'tarneeb', 'likha', 'trix', 'hand']],
   ['cards', { ar: 'الكوتشينة', en: 'Card games' }, '🃏', ['baloot', 'basra', 'shayeb', 'tarneeb', 'likha', 'trix', 'hand']],
   ['action', { ar: 'مغامرات وحركة', en: 'Action & adventure' }, '🏃', ['jumper', 'runner', 'fish', 'zuma']],
-  ['board', { ar: 'ألعاب الطاولة', en: 'Board games' }, '🎲', ['chess', 'ludo', 'domino', 'tawla', 'connect4', 'xo', 'snakes']],
-  ['math', { ar: 'الرياضيات', en: 'Math' }, '🔢', ['multiplication', 'fractions', 'clock', 'g2048', 'sudoku', 'domino', 'snakes', 'business', 'basra']],
+  ['board', { ar: 'ألعاب الطاولة', en: 'Board games' }, '🎲', ['bank', 'chess', 'ludo', 'domino', 'tawla', 'connect4', 'xo', 'snakes']],
+  ['math', { ar: 'الرياضيات', en: 'Math' }, '🔢', ['multiplication', 'fractions', 'clock', 'g2048', 'sudoku', 'domino', 'snakes', 'business', 'basra', 'bank']],
   ['lang', { ar: 'اللغة العربية', en: 'Arabic' }, '📚', ['words', 'irab', 'draw', 'genius']],
   ['sci', { ar: 'العلوم والهندسة', en: 'Science & engineering' }, '🔬', ['bridge', 'inventor', 'architect', 'robot', 'city', 'geo']],
   ['logic', { ar: 'التفكير والألغاز', en: 'Logic & puzzles' }, '🧩', ['chess', 'chesslearn', 'sudoku', 'shapes', 'escape', 'robot', 'zuma', 'connect4', 'xo']],
@@ -217,7 +217,7 @@ onSettings((k) => { if (k === 'lang' || k === 'digits') { if (current?.onLang) {
 
 // ===== مؤثرات العمق: تدرجات SVG مشتركة وإمالة بطاقات الألعاب =====
 document.body.insertAdjacentHTML('afterbegin', '<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs><linearGradient id="fx-ivory" x1="0" y1="0" x2=".3" y2="1"><stop offset="0" stop-color="#fffefa"/><stop offset=".6" stop-color="#f7f0dc"/><stop offset="1" stop-color="#e6dabb"/></linearGradient><filter id="fx-bevel" primitiveUnits="objectBoundingBox" x="-15%" y="-15%" width="130%" height="140%"><feGaussianBlur in="SourceAlpha" stdDeviation=".06" result="b"/><feSpecularLighting in="b" surfaceScale="4" specularConstant="1.3" specularExponent="40" lighting-color="#ffffff" result="s"><feDistantLight azimuth="235" elevation="40"/></feSpecularLighting><feComposite in="s" in2="SourceAlpha" operator="in" result="s2"/><feComposite in="SourceGraphic" in2="s2" operator="arithmetic" k1="0" k2="1" k3=".85" k4="0" result="lit"/><feGaussianBlur in="SourceAlpha" stdDeviation=".05" result="sh"/><feOffset in="sh" dx=".02" dy=".09" result="sho"/><feComponentTransfer in="sho" result="sha"><feFuncA type="linear" slope=".55"/></feComponentTransfer><feMerge><feMergeNode in="sha"/><feMergeNode in="lit"/></feMerge></filter><filter id="fx-wood" x="0" y="0" width="1" height="1"><feTurbulence type="fractalNoise" baseFrequency=".18 3.2" numOctaves="3" seed="7" result="t"/><feColorMatrix in="t" type="matrix" values="0 0 0 0 .22  0 0 0 0 .11  0 0 0 0 .03  0 0 0 -2.2 1.35" result="w"/><feComposite in="w" in2="SourceAlpha" operator="in" result="w2"/><feMerge><feMergeNode in="SourceGraphic"/><feMergeNode in="w2"/></feMerge></filter><radialGradient id="fx-gloss" cx=".35" cy=".3" r=".7"><stop offset="0" stop-color="#fff" stop-opacity=".6"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></radialGradient></defs></svg>');
-applyView(); onSettings((k) => { if (k === 'view') applyView(); });
+applyView(); onSettings((k) => { if (k === 'view') { applyView(); try { current?.onLang?.(); } catch (e) { console.error(e); } } });
 if (matchMedia('(hover: hover)').matches && !matchMedia('(prefers-reduced-motion: reduce)').matches) {
   document.addEventListener('pointermove', (e) => {
     const c = e.target.closest?.('.game-card'); if (!c) return;

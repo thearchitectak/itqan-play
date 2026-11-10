@@ -23,3 +23,5 @@
   .sn-plist { display: flex; flex-wrap: wrap; justify-content: center; }
   .sn-qopts { grid-template-columns: 1fr; }
 }
+.sn-mv { cursor: pointer; } .sn-ring { animation: snring 1s ease-in-out infinite; transform-box: fill-box; transform-origin: center; } @keyframes snring { 50% { opacity: .3; } }
+.sn-tgt { pointer-events: none; animation: snring 1s ease-in-out infinite; }

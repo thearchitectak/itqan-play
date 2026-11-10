@@ -1,9 +1,10 @@
 // عدّاء الطاقة: جري لا ينتهي في ثلاثة مسارات بمنظور ثلاثي الأبعاد. اقفز وانزلق وغيّر المسار، واجمع قوارير الماء والفواكه، وتجنب الحواجز.
 // الشخصية والرسوم أصلية بالكامل.
 import { h, t, addDict, sound, num, store, is3d } from '../../assets/js/core.js';
+import { joystick, holdBtn } from '../../assets/js/vpad.js';
 addDict({
-  ar: { rn_start: 'ابدأ الجري', rn_over: 'اصطدمت! المسافة {d} م', rn_best: 'أفضل مسافة: {d} م', rn_again: 'جرّب مرة أخرى', rn_help: 'الأسهم: يمين ويسار لتغيير المسار، وأعلى للقفز، وأسفل للانزلاق. على الهاتف: اسحب بإصبعك.', rn_tip: 'معلومة صحية' },
-  en: { rn_start: 'Start running', rn_over: 'Crash! Distance {d} m', rn_best: 'Best: {d} m', rn_again: 'Try again', rn_help: 'Arrows: left/right to switch lanes, up to jump, down to slide. Phone: swipe.', rn_tip: 'Health tip' },
+  ar: { rn_start: 'ابدأ الجري', rn_over: 'اصطدمت! المسافة {d} م', rn_best: 'أفضل مسافة: {d} م', rn_again: 'جرّب مرة أخرى', rn_help: 'الأسهم يمينًا ويسارًا لتغيير المسار، والسهم الأعلى للقفز فوق البراميل المتدحرجة، والسهم الأسفل للهبوط السريع. وعلى الهاتف: عصا التحكم يمينًا وزر القفز يسارًا. تجنّب أكوام البراميل والصخور المتدحرجة نحوك.', rn_tip: 'معلومة صحية' },
+  en: { rn_start: 'Start running', rn_over: 'Crash! Distance {d} m', rn_best: 'Best: {d} m', rn_again: 'Try again', rn_help: 'Left/right to switch lanes, up to jump rolling barrels, down to dive. Phone: joystick right, jump left. Avoid barrel stacks and rolling boulders.', rn_tip: 'Health tip' },
 });
 const TIPS = ['اشرب الماء بانتظام، فهو أفضل مشروب لجسمك.', 'الفواكه والخضار تمدّك بالفيتامينات والطاقة.', 'المشروبات الغازية تحتوي على سكر كثير، فقلّل منها.', 'الجري 30 دقيقة يوميًّا يقوّي القلب.', 'النوم الكافي يساعد عقلك على التركيز والتعلّم.'];
 export async function mount(root) {
@@ -20,9 +21,9 @@ export async function mount(root) {
     const z = S.z + 420 + Math.random() * 60;
     const kind = Math.random();
     const lanes = [0, 1, 2].sort(() => Math.random() - .5);
-    if (kind < .35) { S.objs.push({ t: 'block', lane: lanes[0], z }); if (Math.random() < .5) S.objs.push({ t: 'block', lane: lanes[1], z }); }
-    else if (kind < .55) S.objs.push({ t: 'bar', lane: lanes[0], z }); // حاجز منخفض: اقفز
-    else if (kind < .7) S.objs.push({ t: 'high', lane: lanes[0], z }); // لافتة عالية: انزلق
+    // براميل أفقية تتدحرج نحو البطل (فكرة ببسي مان): اقفز فوقها أو غيّر المسار
+    if (kind < .55) { S.objs.push({ t: 'bar', lane: lanes[0], z: z + 60 }); if (Math.random() < .45) S.objs.push({ t: 'bar', lane: lanes[1], z: z + 60 + Math.random() * 20 }); }
+    else if (kind < .66) S.objs.push({ t: 'ball', lane: lanes[0], z: z + 80 }); // صخرة تتدحرج نحوك: غيّر المسار
     else { const ln = lanes[0]; for (let k = 0; k < 5; k++) S.objs.push({ t: Math.random() < .25 ? 'fruit' : 'water', lane: ln, z: z + k * 18 }); }
     S.next = S.z + 60 + Math.random() * 50 - Math.min(30, S.speed);
   }
@@ -33,44 +34,66 @@ export async function mount(root) {
     if (S.y > 0 || S.vy) { S.vy -= .055; S.y += S.vy; if (S.y <= 0) { S.y = 0; S.vy = 0; } }
     if (S.slide > 0) S.slide--;
     if (S.z > S.next) spawn();
+    for (const o of S.objs) if (o.t === 'ball') { o.z -= S.speed * .09; o.rot = (o.rot || 0) + .12; } else if (o.t === 'bar') { o.z -= S.speed * .07; o.rot = (o.rot || 0) + .16; }
     for (const o of S.objs) {
       if (o.done) continue; const d = o.z - S.z;
       if (d < 6 && d > -4 && Math.abs(o.lane - S.lx) < .5) {
         if (o.t === 'water' || o.t === 'fruit') { o.done = true; S.items++; S.score += o.t === 'fruit' ? 50 : 20; sound('place'); }
-        else if (o.t === 'block' || (o.t === 'bar' && S.y < .35) || (o.t === 'high' && S.slide <= 0)) { state = 'over'; sound('lose'); best = Math.max(best, Math.floor(S.z / 4)); store.set('rn-best', best); ui(); }
+        else if (o.t === 'block' || (o.t === 'bar' && S.y < .35) || (o.t === 'ball' && S.y < 2.5)) { state = 'over'; sound('lose'); best = Math.max(best, Math.floor(S.z / 4)); store.set('rn-best', best); ui(); }
         else if (!o.passed) { o.passed = true; S.score += 25; sound('move'); }
       }
     }
     S.objs = S.objs.filter(o => o.z - S.z > -20);
   }
   function drawRunner() {
-    const p = proj((S.lx - 1), S.z, S.y); const sc = p.sc * 1.25; const ph = S.t * .35 * (S.speed / 14);
+    const p = proj((S.lx - 1), S.z, S.y); const sc = p.sc * 1.25; const ph = S.t * .35 * (S.speed / 14), D3 = is3d();
     g.save(); g.translate(p.sx, p.sy); g.scale(sc, sc);
-    g.fillStyle = 'rgba(0,0,0,.25)'; g.beginPath(); g.ellipse(0, S.y * 120, 34, 10, 0, 0, 7); g.fill();
-    if (S.slide > 0) { g.fillStyle = '#0ea5e9'; g.beginPath(); g.roundRect(-40, -34, 80, 30, 14); g.fill(); g.fillStyle = '#fbbf24'; g.beginPath(); g.arc(34, -30, 15, 0, 7); g.fill(); g.restore(); return; }
-    const leg = Math.sin(ph) * 16;
-    g.strokeStyle = '#1e293b'; g.lineWidth = 11; g.lineCap = 'round';
-    g.beginPath(); g.moveTo(-8, -50); g.lineTo(-10 + leg, -6); g.stroke(); g.beginPath(); g.moveTo(8, -50); g.lineTo(10 - leg, -6); g.stroke();
-    g.fillStyle = '#f97316'; g.fillRect(-20 + leg, -10, 18, 9); g.fillRect(2 - leg, -10, 18, 9);
-    const bd = g.createLinearGradient(-22, 0, 22, 0); bd.addColorStop(0, '#7dd3fc'); bd.addColorStop(.45, '#0ea5e9'); bd.addColorStop(1, '#075985'); g.fillStyle = is3d() ? bd : '#0ea5e9'; g.beginPath(); g.roundRect(-22, -110, 44, 64, 14); g.fill();
-    g.fillStyle = '#fff'; g.font = '900 22px system-ui'; g.textAlign = 'center'; g.fillText('7', 0, -70);
-    g.strokeStyle = '#fbbf24'; g.lineWidth = 10; g.beginPath(); g.moveTo(-20, -100); g.lineTo(-32, -70 - leg * .6); g.stroke(); g.beginPath(); g.moveTo(20, -100); g.lineTo(32, -70 + leg * .6); g.stroke();
-    const hg = g.createRadialGradient(-7, -136, 2, 0, -128, 23); hg.addColorStop(0, '#fef3c7'); hg.addColorStop(.5, '#fbbf24'); hg.addColorStop(1, '#b45309'); g.fillStyle = is3d() ? hg : '#fbbf24'; g.beginPath(); g.arc(0, -128, 20, 0, 7); g.fill();
-    g.fillStyle = '#7c2d12'; g.beginPath(); g.arc(0, -134, 21, Math.PI, 0); g.fill();
-    g.fillStyle = '#22c55e'; g.fillRect(-21, -140, 42, 6);
+    g.fillStyle = 'rgba(0,0,0,.28)'; g.beginPath(); g.ellipse(0, S.y * 120, 36, 10, 0, 0, 7); g.fill();
+    const lin = (x0, y0, x1, y1, stops) => { if (!D3) return stops[1]; const q = g.createLinearGradient(x0, y0, x1, y1); stops.forEach((c, i) => q.addColorStop(i / (stops.length - 1), c)); return q; };
+    const leg = Math.sin(ph) * 16, arm = Math.sin(ph) * .5;
+    // البطل منتصب يجري: ساقان كاملتان بركبتين، وعباءة قصيرة حتى الخصر
+    const Y = -18; // رفع الجسم كله
+    const fl = Math.sin(S.t * .3) * 6;
+    g.fillStyle = lin(-30, -150, 30, -60, ['#b91c1c', '#dc2626', '#7f1d1d']); g.beginPath(); g.moveTo(-24, -138 + Y); g.quadraticCurveTo(-36 + fl, -100 + Y, -30 - fl, -66 + Y); g.quadraticCurveTo(0, -58 + Y + fl * .3, 30 + fl, -66 + Y); g.quadraticCurveTo(36 - fl, -100 + Y, 24, -138 + Y); g.fill();
+    const legDraw = (sx, ph2) => { const hip = [sx, -66 + Y], kneeOff = Math.sin(ph2) * 14, lift = Math.max(0, Math.cos(ph2)) * 12;
+      const knee = [sx + kneeOff * .5, -36 + Y - lift * .5], foot = [sx + kneeOff * .2, -4 + Y * .2 - lift];
+      g.lineCap = 'round'; g.strokeStyle = lin(-12, 0, 12, 0, ['#60a5fa', '#1d4ed8', '#1e3a8a']); g.lineWidth = 15; g.beginPath(); g.moveTo(...hip); g.lineTo(...knee); g.stroke(); g.lineWidth = 12; g.beginPath(); g.moveTo(...knee); g.lineTo(foot[0], foot[1] - 10); g.stroke();
+      g.fillStyle = lin(0, foot[1] - 18, 0, foot[1], ['#f87171', '#dc2626', '#7f1d1d']); g.beginPath(); g.roundRect(foot[0] - 8, foot[1] - 20, 16, 22, [5, 5, 3, 3]); g.fill(); g.fillStyle = '#450a0a'; g.fillRect(foot[0] - 8, foot[1] - 1, 16, 3); };
+    legDraw(-9, ph); legDraw(9, ph + Math.PI);
+    // الحزام والجذع العضلي
+    g.fillStyle = lin(-24, 0, 24, 0, ['#60a5fa', '#2563eb', '#1e3a8a']); g.beginPath(); g.moveTo(-25, -136 + Y); g.quadraticCurveTo(0, -144 + Y, 25, -136 + Y); g.lineTo(19, -72 + Y); g.quadraticCurveTo(0, -66 + Y, -19, -72 + Y); g.closePath(); g.fill();
+    g.fillStyle = lin(0, -76 + Y, 0, -64 + Y, ['#fde047', '#eab308', '#a16207']); g.fillRect(-20, -76 + Y, 40, 9); g.fillStyle = '#facc15'; g.fillRect(-5, -75.5 + Y, 10, 8);
+    // الشعار على الظهر والصدر
+    g.fillStyle = lin(0, -128 + Y, 0, -102 + Y, ['#fef08a', '#facc15', '#ca8a04']); g.beginPath(); g.moveTo(0, -130 + Y); g.lineTo(14, -120 + Y); g.lineTo(8, -102 + Y); g.lineTo(-8, -102 + Y); g.lineTo(-14, -120 + Y); g.closePath(); g.fill();
+    g.fillStyle = '#b91c1c'; g.beginPath(); g.moveTo(3, -126 + Y); g.lineTo(-4, -116 + Y); g.lineTo(1, -116 + Y); g.lineTo(-3, -106 + Y); g.lineTo(6, -119 + Y); g.lineTo(1, -119 + Y); g.closePath(); g.fill();
+    if (D3) { g.fillStyle = 'rgba(255,255,255,.18)'; g.beginPath(); g.ellipse(-12, -126 + Y, 6, 4, -.4, 0, 7); g.fill(); }
+    // الذراعان تتأرجحان بالتناوب مع الساقين
+    for (const [sx, a] of [[-1, arm], [1, -arm]]) { g.save(); g.translate(sx * 23, -132 + Y); g.rotate(sx * .18 + a * .9); g.strokeStyle = lin(-8, 0, 8, 0, ['#60a5fa', '#2563eb', '#1e3a8a']); g.lineWidth = 11; g.lineCap = 'round'; g.beginPath(); g.moveTo(0, 0); g.lineTo(sx * 3, 22); g.lineTo(sx * 2 - a * 8, 40); g.stroke(); g.fillStyle = lin(0, 36, 0, 50, ['#f87171', '#dc2626', '#7f1d1d']); g.beginPath(); g.arc(sx * 2 - a * 8, 44, 7.5, 0, 7); g.fill(); g.restore(); }
+    // الرقبة والرأس والقناع
+    g.fillStyle = lin(-6, 0, 6, 0, ['#f5c27d', '#e0a865', '#b07a45']); g.fillRect(-6, -150 + Y, 12, 12);
+    g.fillStyle = lin(-16, -178 + Y, 16, -140 + Y, ['#fde68a', '#f5c27d', '#c68642']); g.beginPath(); g.ellipse(0, -160 + Y, 15, 17, 0, 0, 7); g.fill();
+    g.fillStyle = '#111827'; g.beginPath(); g.ellipse(0, -165 + Y, 16, 14, 0, Math.PI, 0); g.fill(); g.beginPath(); g.moveTo(-16, -165 + Y); g.quadraticCurveTo(0, -150 + Y, 16, -165 + Y); g.quadraticCurveTo(0, -157 + Y, -16, -165 + Y); g.fill();
+    g.fillStyle = '#1e3a8a'; g.beginPath(); g.roundRect(-15, -163 + Y, 30, 8, 4); g.fill();
+    if (D3) { g.fillStyle = 'rgba(255,255,255,.3)'; g.beginPath(); g.ellipse(-6, -171 + Y, 5, 2.6, -.4, 0, 7); g.fill(); }
     g.restore();
   }
   function drawObj(o) {
     const d = o.z - S.z; if (d < -38 || d > 480) return;
     const p = proj(o.lane - 1, o.z); const s = p.sc;
-    if (o.t === 'block') { const w = 150 * s, hh = 140 * s, p2 = proj(o.lane - 1, o.z + 18), w2 = 150 * p2.sc, h2 = 140 * p2.sc;
-      g.fillStyle = 'rgba(0,0,0,.25)'; g.beginPath(); g.ellipse(p.sx, p.sy, w * .6, 10 * s, 0, 0, 7); g.fill();
-      g.fillStyle = '#991b1b'; g.beginPath(); g.moveTo(p.sx - w / 2, p.sy - hh); g.lineTo(p2.sx - w2 / 2, p2.sy - h2); g.lineTo(p2.sx + w2 / 2, p2.sy - h2); g.lineTo(p.sx + w / 2, p.sy - hh); g.fill();
-      const bg = g.createLinearGradient(0, p.sy - hh, 0, p.sy); bg.addColorStop(0, '#f87171'); bg.addColorStop(1, '#b91c1c'); g.fillStyle = bg; g.fillRect(p.sx - w / 2, p.sy - hh, w, hh);
-      g.fillStyle = 'rgba(255,255,255,.9)'; for (let k = 0; k < 3; k++) g.fillRect(p.sx - w / 2, p.sy - hh + (k * 2 + 1) * hh / 7, w, hh / 7);
-      g.fillStyle = 'rgba(255,255,255,.35)'; g.fillRect(p.sx - w / 2, p.sy - hh, w, 4 * s); g.fillStyle = '#7f1d1d'; g.fillRect(p.sx - w / 2, p.sy - 6 * s, w, 6 * s); }
-    if (o.t === 'bar') { const w = 160 * s, hh = 45 * s; g.fillStyle = '#f59e0b'; g.fillRect(p.sx - w / 2, p.sy - hh, w, hh * .45); g.fillStyle = '#111827'; for (let k = 0; k < 4; k++) g.fillRect(p.sx - w / 2 + k * w / 4, p.sy - hh, w / 8, hh * .45); g.fillStyle = '#475569'; g.fillRect(p.sx - w / 2, p.sy - hh, 6 * s, hh); g.fillRect(p.sx + w / 2 - 6 * s, p.sy - hh, 6 * s, hh); }
-    if (o.t === 'high') { const w = 170 * s, top = 200 * s, hh = 60 * s; g.fillStyle = '#475569'; g.fillRect(p.sx - w / 2, p.sy - top - hh, 8 * s, top + hh); g.fillRect(p.sx + w / 2 - 8 * s, p.sy - top - hh, 8 * s, top + hh); g.fillStyle = '#7c3aed'; g.fillRect(p.sx - w / 2, p.sy - top - hh * .2 - 70 * s, w, 70 * s); g.fillStyle = '#fff'; g.font = `900 ${Math.max(8, 34 * s)}px system-ui`; g.textAlign = 'center'; g.fillText('⬇', p.sx, p.sy - top - 30 * s); }
+    const barrel = (cx, by, w, hh, lying) => { // برميل معدني بأطواق وتظليل أسطواني
+      const bg = g.createLinearGradient(cx - w / 2, 0, cx + w / 2, 0); bg.addColorStop(0, '#7f1d1d'); bg.addColorStop(.3, '#ef4444'); bg.addColorStop(.55, '#fca5a5'); bg.addColorStop(.75, '#dc2626'); bg.addColorStop(1, '#450a0a');
+      if (lying) { const lg = g.createLinearGradient(0, by - hh, 0, by); lg.addColorStop(0, '#fca5a5'); lg.addColorStop(.35, '#ef4444'); lg.addColorStop(1, '#450a0a'); g.fillStyle = lg; g.beginPath(); g.roundRect(cx - w / 2, by - hh, w, hh, hh * .45); g.fill(); g.strokeStyle = 'rgba(0,0,0,.45)'; g.lineWidth = Math.max(1, hh * .08); for (const k of [-.3, 0, .3]) { const xx = cx + k * w + Math.sin((o.rot || 0)) * 3; g.beginPath(); g.moveTo(xx, by - hh); g.lineTo(xx, by); g.stroke(); } g.fillStyle = '#fbbf24'; g.font = `900 ${Math.max(8, hh * .55)}px system-ui`; g.textAlign = 'center'; g.fillText('⚠', cx, by - hh * .25); return; }
+      g.fillStyle = bg; g.beginPath(); g.roundRect(cx - w / 2, by - hh, w, hh, w * .12); g.fill();
+      g.fillStyle = '#fecaca'; g.beginPath(); g.ellipse(cx, by - hh, w / 2, w * .12, 0, 0, 7); g.fill(); g.fillStyle = '#991b1b'; g.beginPath(); g.ellipse(cx, by - hh, w * .38, w * .08, 0, 0, 7); g.fill();
+      g.strokeStyle = 'rgba(0,0,0,.4)'; g.lineWidth = Math.max(1, w * .05); for (const k of [.25, .75]) { g.beginPath(); g.ellipse(cx, by - hh * k, w / 2, w * .1, 0, 0, Math.PI); g.stroke(); }
+      g.fillStyle = '#facc15'; g.beginPath(); g.moveTo(cx, by - hh * .62); g.lineTo(cx + w * .16, by - hh * .38); g.lineTo(cx - w * .16, by - hh * .38); g.fill();
+    };
+    if (o.t === 'block') { const w = 70 * s, hh = 95 * s; g.fillStyle = 'rgba(0,0,0,.3)'; g.beginPath(); g.ellipse(p.sx, p.sy, 80 * s, 12 * s, 0, 0, 7); g.fill(); barrel(p.sx - 38 * s, p.sy, w, hh); barrel(p.sx + 38 * s, p.sy, w, hh); barrel(p.sx, p.sy - hh * .92, w, hh); }
+    if (o.t === 'bar') { const w = 150 * s, hh = 52 * s; g.fillStyle = 'rgba(0,0,0,.3)'; g.beginPath(); g.ellipse(p.sx, p.sy, w * .55, 9 * s, 0, 0, 7); g.fill(); barrel(p.sx, p.sy, w, hh, true); }
+    if (o.t === 'ball') { const r = 62 * s, cy = p.sy - r; g.fillStyle = 'rgba(0,0,0,.35)'; g.beginPath(); g.ellipse(p.sx, p.sy, r * 1.05, r * .22, 0, 0, 7); g.fill();
+      const bg = g.createRadialGradient(p.sx - r * .4, cy - r * .45, r * .1, p.sx, cy, r * 1.1); bg.addColorStop(0, '#d6d3d1'); bg.addColorStop(.5, '#78716c'); bg.addColorStop(1, '#292524'); g.fillStyle = bg; g.beginPath(); g.arc(p.sx, cy, r, 0, 7); g.fill();
+      g.save(); g.translate(p.sx, cy); g.rotate(o.rot || 0); g.strokeStyle = 'rgba(0,0,0,.35)'; g.lineWidth = Math.max(1, r * .07); for (const a of [0, 2.1, 4.2]) { g.beginPath(); g.arc(Math.cos(a) * r * .45, Math.sin(a) * r * .45, r * .25, 0, 4); g.stroke(); } g.restore();
+      g.fillStyle = 'rgba(255,255,255,.25)'; g.beginPath(); g.ellipse(p.sx - r * .35, cy - r * .4, r * .25, r * .14, -.6, 0, 7); g.fill(); }
     if (o.t === 'water') { const hh = 52 * s, w = 22 * s, y = p.sy - 40 * s + Math.sin(S.t * .1 + o.z) * 6 * s; if (is3d()) { const wg = g.createLinearGradient(p.sx - w / 2, 0, p.sx + w / 2, 0); wg.addColorStop(0, 'rgba(186,230,253,.95)'); wg.addColorStop(.4, 'rgba(56,189,248,.9)'); wg.addColorStop(1, 'rgba(3,105,161,.95)'); g.fillStyle = wg; } else g.fillStyle = 'rgba(56,189,248,.85)'; g.beginPath(); g.roundRect(p.sx - w / 2, y - hh, w, hh, 6 * s); g.fill(); g.fillStyle = '#1d4ed8'; g.fillRect(p.sx - w / 4, y - hh - 8 * s, w / 2, 8 * s); g.fillStyle = '#fff'; g.fillRect(p.sx - w / 2 + 3 * s, y - hh * .7, w - 6 * s, 12 * s); }
     if (o.t === 'fruit') { const r = 20 * s, y = p.sy - 50 * s + Math.sin(S.t * .1 + o.z) * 6 * s; if (is3d()) { const fg = g.createRadialGradient(p.sx - r * .4, y - r * .4, r * .1, p.sx, y, r * 1.1); fg.addColorStop(0, '#fecaca'); fg.addColorStop(.45, '#ef4444'); fg.addColorStop(1, '#7f1d1d'); g.fillStyle = fg; } else g.fillStyle = '#ef4444'; g.beginPath(); g.arc(p.sx, y, r, 0, 7); g.fill(); g.fillStyle = '#16a34a'; g.beginPath(); g.ellipse(p.sx + 6 * s, y - r, 8 * s, 4 * s, -.5, 0, 7); g.fill(); }
   }
@@ -102,7 +125,7 @@ export async function mount(root) {
   }
   function start0() { g.fillStyle = '#334155'; g.beginPath(); g.moveTo(VPX - 40, HZ); g.lineTo(VPX + 40, HZ); g.lineTo(W * .85, H); g.lineTo(W * .15, H); g.fill(); }
   function loop() { raf = requestAnimationFrame(loop); update(); draw(); }
-  const act = (k) => { if (state !== 'play') return; if (k === 'L') S.lane = Math.max(0, S.lane - 1); if (k === 'R') S.lane = Math.min(2, S.lane + 1); if (k === 'U' && S.y === 0) { S.vy = .95; S.slide = 0; sound('move'); } if (k === 'D') { S.slide = 45; if (S.y > 0) S.vy = -1.2; } };
+  const act = (k) => { if (state !== 'play') return; if (k === 'L') S.lane = Math.max(0, S.lane - 1); if (k === 'R') S.lane = Math.min(2, S.lane + 1); if (k === 'U' && S.y === 0) { S.vy = .95; S.slide = 0; sound('move'); } if (k === 'D' && S.y > 0) S.vy = -1.2; if (k === 'D') { S.slide = 45; if (S.y > 0) S.vy = -1.2; } };
   const kd = (e) => { if (!view.isConnected) return; const k = { ArrowLeft: 'L', ArrowRight: 'R', ArrowUp: 'U', ArrowDown: 'D', a: 'L', d: 'R', w: 'U', s: 'D', ' ': 'U' }[e.key]; if (k) { e.preventDefault(); act(k); } };
   window.addEventListener('keydown', kd);
   let sx, sy; cv.addEventListener('touchstart', (e) => { sx = e.touches[0].clientX; sy = e.touches[0].clientY; }, { passive: true });
@@ -113,8 +136,8 @@ export async function mount(root) {
     if (state === 'menu') msg.append(h('h2', {}, '🏃 ', t('rn_start')), h('p', {}, t('rn_best', { d: num(best) })), h('button', { type: 'button', class: 'btn gk-go', onclick: start }, t('rn_start')), h('small', {}, t('rn_help')));
     if (state === 'over') msg.append(h('h2', {}, t('rn_over', { d: num(Math.floor(S.z / 4)) })), h('p', {}, '💧 ', num(S.items), ' · ⭐ ', num(S.score), ' · ', t('rn_best', { d: num(best) })), h('p', { class: 'rn-tip' }, '💡 ', t('rn_tip'), ': ', TIPS[Math.floor(Math.random() * TIPS.length)]), h('button', { type: 'button', class: 'btn gk-go', onclick: start }, t('rn_again')));
   }
-  const pads = h('div', { class: 'jp-pads' }, h('div', {}, ...[['L', '◀'], ['R', '▶']].map(([k, l]) => h('button', { type: 'button', class: 'jp-pad', onclick: () => act(k) }, l))), h('div', {}, ...[['D', '⬇'], ['U', '⤒']].map(([k, l]) => h('button', { type: 'button', class: 'jp-pad' + (k === 'U' ? ' jump' : ''), onclick: () => act(k) }, l))));
-  view.append(h('div', { class: 'jp-stage' }, cv, msg, pads));
+  const pads = h('div', { class: 'jp-pads' }, h('div', { class: 'jp-btns' }, holdBtn('⤒', '', () => act('U')), holdBtn('⬇', 'alt', () => act('D'))), joystick({ onDir: (d) => act(d) }));
+  view.append(h('div', { class: 'jp-stage' }, cv, msg), pads);
   ui(); loop();
   return { unmount() { cancelAnimationFrame(raf); window.removeEventListener('keydown', kd); } };
 }

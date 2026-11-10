@@ -1,5 +1,5 @@
 // الطاولة (الزهر) بأنواعها الشائعة: العادة (بالضرب)، والمحبوسة (بالحبس)، والواحد والثلاثون (بلا ضرب ولا حبس).
-import { h, t, addDict, sound, num, ico } from '../../assets/js/core.js';
+import { h, t, addDict, sound, num, ico, is3d, gloss } from '../../assets/js/core.js';
 import { tableGame, rnd, pick, dieFace } from '../../assets/js/gamekit.js';
 
 addDict({
@@ -244,12 +244,13 @@ function boardSvg(v, viewer, sel, targets, onPoint) {
   const S = (tag, at, parent) => sv(tag, at, parent || svg);
   // تدرجات المثلثات وظل الإطار الداخلي (خشب حقيقي بمرشح عروق الخشب)
   const defs = S('defs', {});
+  { const f = S('filter', { id: 'tw-wood', x: 0, y: 0, width: 1, height: 1 }, defs); S('feTurbulence', { type: 'fractalNoise', baseFrequency: '.18 3.2', numOctaves: 3, seed: 7, result: 't' }, f); S('feColorMatrix', { in: 't', type: 'matrix', values: '0 0 0 0 .22  0 0 0 0 .11  0 0 0 0 .03  0 0 0 -2.2 1.35', result: 'w' }, f); S('feComposite', { in: 'w', in2: 'SourceAlpha', operator: 'in', result: 'w2' }, f); const m = S('feMerge', {}, f); S('feMergeNode', { in: 'SourceGraphic' }, m); S('feMergeNode', { in: 'w2' }, m); }
   for (const [id, a, b] of [['tw-rt', '#c2533f', '#7f2a1d'], ['tw-gt', '#3f6b4f', '#1f3a29']]) for (const dir of ['t', 'b']) { const lg = S('linearGradient', { id: id + dir, x1: 0, y1: dir === 't' ? 0 : 1, x2: 0, y2: dir === 't' ? 1 : 0 }, defs); S('stop', { offset: 0, 'stop-color': a }, lg); S('stop', { offset: 1, 'stop-color': b }, lg); }
   const ig = S('radialGradient', { id: 'tw-in', cx: .5, cy: .5, r: .75 }, defs); S('stop', { offset: .6, 'stop-color': '#000', 'stop-opacity': 0 }, ig); S('stop', { offset: 1, 'stop-color': '#3b2412', 'stop-opacity': .35 }, ig);
-  S('rect', { x: -0.2, y: -0.2, width: W, height: H + 0.4, rx: .35, fill: '#6b3f1d', filter: 'url(#fx-wood)' });
-  S('rect', { x: 0, y: 0, width: 13, height: H, fill: '#e9d3a6', filter: 'url(#fx-wood)' });
-  S('rect', { x: 6, y: 0, width: 1, height: H, fill: '#7c4a22', filter: 'url(#fx-wood)' });
-  S('rect', { x: 13.2, y: 0, width: 1.8, height: H, rx: .2, fill: '#4a2b12', filter: 'url(#fx-wood)' });
+  S('rect', { x: -0.2, y: -0.2, width: W, height: H + 0.4, rx: .35, fill: '#6b3f1d', filter: 'url(#tw-wood)' });
+  S('rect', { x: 0, y: 0, width: 13, height: H, fill: '#e9d3a6', filter: 'url(#tw-wood)' });
+  S('rect', { x: 6, y: 0, width: 1, height: H, fill: '#7c4a22', filter: 'url(#tw-wood)' });
+  S('rect', { x: 13.2, y: 0, width: 1.8, height: H, rx: .2, fill: '#4a2b12', filter: 'url(#tw-wood)' });
   const view = (a) => viewer === 0 ? a : 25 - a; // رقم العرض
   for (let i = 1; i <= 24; i++) {
     const x = slotX(i), top = i > 12;
@@ -258,7 +259,7 @@ function boardSvg(v, viewer, sel, targets, onPoint) {
   }
   S('rect', { x: 0, y: 0, width: 13, height: H, fill: 'url(#tw-in)', 'pointer-events': 'none' });
   const abs = (i) => viewer === 0 ? i : 25 - i;
-  const ck = (cx, cy, P, extra = '') => { const g = S('g', { class: 'tw-ck ' + extra }); S('circle', { cx, cy, r: .45, fill: COLORS[P], stroke: P ? '#2d1a0b' : '#b9a77c', 'stroke-width': .06 }, g); S('circle', { cx, cy, r: .28, fill: 'none', stroke: P ? '#7a5434' : '#d9cfb3', 'stroke-width': .05 }, g); return g; };
+  const ck = (cx, cy, P, extra = '') => { const g = S('g', { class: 'tw-ck ' + extra }); S('circle', { cx, cy, r: .45, fill: COLORS[P], stroke: P ? '#2d1a0b' : '#b9a77c', 'stroke-width': .06 }, g); S('circle', { cx, cy, r: .28, fill: 'none', stroke: P ? '#7a5434' : '#d9cfb3', 'stroke-width': .05 }, g); if (is3d()) S('circle', { cx, cy, r: .45, fill: gloss(svg) }, g); return g; };
   for (let i = 1; i <= 24; i++) {
     const a = abs(i), p = v.pts[a]; const x = slotX(i) + .5, top = i > 12;
     const stack = [];

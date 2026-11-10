@@ -1,16 +1,16 @@
 // السلم والثعبان التعليمي: لا تصعد السلم إلا بإجابة صحيحة، وتنجو من الثعبان إن أجبت صحيحًا.
-import { h, t, addDict, sound, num, settings } from '../../assets/js/core.js';
+import { h, t, addDict, sound, num, settings, is3d, gloss } from '../../assets/js/core.js';
 import { tableGame, rnd, dieFace } from '../../assets/js/gamekit.js';
 import { pickQuestions, CATS } from '../../assets/js/qbank.js';
 
 addDict({
   ar: {
-    sn_roll: 'ارمِ النرد', sn_ladder: 'سلّم! أجب لتصعد إلى {n}', sn_snake: 'ثعبان! أجب لتنجو من النزول إلى {n}', sn_up: '{name} صعد السلم 🪜', sn_down: '{name} نزل مع الثعبان 🐍', sn_safe: '{name} نجا من الثعبان 🛡️', sn_stay: '{name} لم يصعد',
+    sn_roll: 'ارمِ النرد', sn_move: 'اضغط قطعتك لتتحرك {n} خطوات', sn_moveBtn: 'حرّك القطعة', sn_ladder: 'سلّم! أجب لتصعد إلى {n}', sn_snake: 'ثعبان! أجب لتنجو من النزول إلى {n}', sn_up: '{name} صعد السلم 🪜', sn_down: '{name} نزل مع الثعبان 🐍', sn_safe: '{name} نجا من الثعبان 🛡️', sn_stay: '{name} لم يصعد',
     sn_cats: 'مجال الأسئلة', sn_all: 'منوعة', sn_level: 'المستوى', sn_exact: 'الوصول إلى 100', sn_exactY: 'بالرقم المضبوط', sn_exactN: 'بأي رقم', sn_six: 'رمية 6 تعطي دورًا إضافيًا', sn_on: 'نعم', sn_off: 'لا',
     sn_rules: '<ol><li>ارمِ النرد وتقدم بعدد نقاطه.</li><li>إن وقفت عند أسفل <b>سلّم</b> يظهر لك سؤال: إجابة صحيحة = تصعد، وخاطئة = تبقى مكانك.</li><li>إن وقفت عند رأس <b>ثعبان</b> يظهر سؤال: إجابة صحيحة = تنجو، وخاطئة = تنزل إلى ذيله.</li><li>أول من يصل إلى الخانة 100 يفوز.</li></ol>',
   },
   en: {
-    sn_roll: 'Roll', sn_ladder: 'Ladder! Answer to climb to {n}', sn_snake: 'Snake! Answer to avoid sliding to {n}', sn_up: '{name} climbed 🪜', sn_down: '{name} slid down 🐍', sn_safe: '{name} escaped the snake 🛡️', sn_stay: "{name} didn't climb",
+    sn_roll: 'Roll', sn_move: 'Tap your piece to move {n}', sn_moveBtn: 'Move piece', sn_ladder: 'Ladder! Answer to climb to {n}', sn_snake: 'Snake! Answer to avoid sliding to {n}', sn_up: '{name} climbed 🪜', sn_down: '{name} slid down 🐍', sn_safe: '{name} escaped the snake 🛡️', sn_stay: "{name} didn't climb",
     sn_cats: 'Questions', sn_all: 'Mixed', sn_level: 'Level', sn_exact: 'Reaching 100', sn_exactY: 'Exact roll', sn_exactN: 'Any roll', sn_six: 'A 6 gives another turn', sn_on: 'Yes', sn_off: 'No',
     sn_rules: '<ol><li>Roll and move.</li><li>At a ladder foot, answer correctly to climb.</li><li>At a snake head, answer correctly to escape.</li><li>First to 100 wins.</li></ol>',
   },
@@ -40,7 +40,10 @@ const def = {
     if (seat !== s.turn) return t('gk_err');
     const name = s.players[seat].name;
     if (s.phase === 'roll' && a.type === 'roll') {
-      const d = 1 + rnd(6); s.dice = d; s.rollId++; s.msg = null;
+      const d = 1 + rnd(6); s.dice = d; s.rollId++; s.msg = null; s.phase = 'move'; return null;
+    }
+    if (s.phase === 'move' && a.type === 'move') {
+      const d = s.dice; s.phase = 'roll';
       let to = s.pos[seat] + d;
       if (to > 100) to = s.exact ? s.pos[seat] : 100;
       s.pos[seat] = to;
@@ -67,19 +70,20 @@ const def = {
   },
   bot(s, seat, lv) {
     if (s.phase === 'roll') return { type: 'roll' };
+    if (s.phase === 'move') return { type: 'move' };
     const p = lv === 'easy' ? .5 : .8;
     return { type: 'answer', c: Math.random() < p ? s.q.ok : rnd(4) };
   },
-  botDelay: (s) => s.phase === 'question' ? 2600 : 900,
+  botDelay: (s) => s.phase === 'question' ? 2600 : s.phase === 'move' ? 1100 : 900,
   over: (s) => s.phase === 'over',
   result(s, seat) { const w = s.winner; return { title: w === seat ? t('gk_youWin') : t('gk_gameOver'), big: t('gk_winner', { name: s.players[w].name }), win: w === seat, lines: s.players.map((p, i) => i).sort((a, b) => s.pos[b] - s.pos[a]).map(i => ({ label: s.players[i].name, avatar: s.players[i].avatar, value: num(s.pos[i]), color: COLORS[i] })) }; },
-  status(v, ui) { if (v.phase === 'question') return t(v.q.kind === 'ladder' ? 'sn_ladder' : 'sn_snake', { n: num(v.q.to) }); return ui.myTurn ? t('sn_roll') : t('gk_turnOf', { name: ui.name(v.turn) }); },
+  status(v, ui) { if (v.phase === 'question') return t(v.q.kind === 'ladder' ? 'sn_ladder' : 'sn_snake', { n: num(v.q.to) }); return ui.myTurn ? (v.phase === 'move' ? t('sn_move', { n: num(v.dice) }) : t('sn_roll')) : t('gk_turnOf', { name: ui.name(v.turn) }); },
   render(el, v, ui) { renderSnakes(el, v, ui); },
   preview() { return boardSvg({ pos: [], players: [] }); },
 };
 const NS = 'http://www.w3.org/2000/svg';
 const sv = (tag, at, parent) => { const e = document.createElementNS(NS, tag); for (const k in at) e.setAttribute(k, at[k]); parent?.append(e); return e; };
-function boardSvg(v) {
+function boardSvg(v, ui) {
   const svg = sv('svg', { viewBox: '0 0 10 10', class: 'sn-svg' });
   const pal = ['#fde68a', '#bbf7d0', '#bfdbfe', '#fbcfe8', '#ddd6fe'];
   for (let n = 1; n <= 100; n++) {
@@ -107,8 +111,12 @@ function boardSvg(v) {
   v.pos.forEach((p, i) => (groups[p] ||= []).push(i));
   for (const [p, list] of Object.entries(groups)) list.forEach((i, k) => {
     const [x, y] = cell(+p); const off = list.length > 1 ? [[-.18, -.12], [.18, -.12], [-.18, .18], [.18, .18]][k] : [0, 0];
-    const g = sv('g', { class: 'sn-tok', style: `transform: translate(${x + off[0]}px, ${y + off[1]}px)` }, svg);
+    const mv = ui && ui.myTurn && v.phase === 'move' && i === v.turn;
+    const g = sv('g', { class: 'sn-tok' + (mv ? ' sn-mv' : ''), style: `transform: translate(${x + off[0]}px, ${y + off[1]}px)` }, svg);
+    if (mv) { sv('circle', { cx: 0, cy: 0, r: .42, fill: 'none', stroke: '#facc15', 'stroke-width': .08, class: 'sn-ring' }, g); g.addEventListener('click', () => { sound('move'); ui.act({ type: 'move' }); }); const tgt = Math.min(100, v.pos[i] + v.dice); if (!(v.exact && v.pos[i] + v.dice > 100)) { const [tx, ty] = cell(tgt); sv('circle', { cx: tx, cy: ty, r: .38, fill: 'rgba(250,204,21,.35)', stroke: '#facc15', 'stroke-width': .06, class: 'sn-tgt' }, svg); } }
+    if (is3d()) sv('ellipse', { cx: .04, cy: .2, rx: .24, ry: .08, fill: 'rgba(0,0,0,.3)' }, g);
     sv('circle', { cx: 0, cy: 0, r: .26, fill: COLORS[i], stroke: '#fff', 'stroke-width': .06 }, g);
+    if (is3d()) sv('circle', { cx: 0, cy: 0, r: .26, fill: gloss(svg) }, g);
     const tt = sv('text', { x: 0, y: .1, 'font-size': .28, 'text-anchor': 'middle' }, g); tt.textContent = v.players[i]?.avatar || '';
   });
   return svg;
@@ -119,9 +127,10 @@ function renderSnakes(el, v, ui) {
     h('div', { class: 'sn-plist' }, v.players.map((p, i) => ui.plate(i, h('b', { class: 'sn-pos' }, num(v.pos[i]))))),
     v.dice ? h('div', { class: 'sn-dice', key: v.rollId }, dieFace(v.dice, 'roll')) : null,
     ui.myTurn && v.phase === 'roll' ? h('button', { type: 'button', class: 'gk-bigbtn gk-pulse', style: { '--pc': COLORS[me] }, onclick: () => { sound('draw'); ui.act({ type: 'roll' }); } }, '🎲 ', t('sn_roll')) : null,
+    ui.myTurn && v.phase === 'move' ? h('button', { type: 'button', class: 'gk-bigbtn gk-pulse', style: { '--pc': COLORS[me] }, onclick: () => { sound('move'); ui.act({ type: 'move' }); } }, '👣 ', t('sn_moveBtn'), ' (', num(v.dice), ')') : null,
     v.msg ? h('div', { class: 'sn-msg' }, t(v.msg.k, { name: v.msg.name })) : null,
     v.last && v.phase === 'roll' && !v.q ? h('div', { class: 'sn-last ' + (v.last.ok ? 'ok' : 'bad') }, h('small', {}, v.last.q), h('b', {}, v.last.opts[v.last.right])) : null);
-  const wrap = h('div', { class: 'sn-wrap' }, h('div', { class: 'sn-board' }, boardSvg(v)), side);
+  const wrap = h('div', { class: 'sn-wrap' }, h('div', { class: 'sn-board' }, boardSvg(v, ui)), side);
   if (v.phase === 'question' && v.q) {
     const can = ui.myTurn;
     wrap.append(h('div', { class: 'sn-qwrap' }, h('div', { class: 'sn-qcard ' + v.q.kind },

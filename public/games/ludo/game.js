@@ -1,6 +1,6 @@
 // لعبة لودو — جزء من سلسلة العب وتعلّم
 // على الجهاز نفسه، أو ضد الكمبيوتر، أو عبر الإنترنت (مع محادثة وميكروفون وكاميرا اختيارية)
-import { h, ico, t, addDict, settings, num, modal, toast, sound, displayName, store, copyText, viewToggle } from '../../assets/js/core.js';
+import { h, ico, t, addDict, settings, num, modal, toast, sound, displayName, store, copyText, viewToggle, is3d, gloss } from '../../assets/js/core.js';
 import { HostRoom, GuestRoom, netError } from '../../assets/js/netroom.js';
 import { Comms } from '../../assets/js/comms.js';
 
@@ -271,6 +271,7 @@ export async function mount(root, ctx) {
         const tg = el('g', { class: 'l-tok' + (movable ? ' mv' : '') + (G0.last && G0.last.c === tk.p.c && G0.last.k === tk.k ? ' last' : ''), transform: `translate(${tk.x + off} ${tk.y + off})` }, g);
         el('circle', { r: n > 1 ? 0.33 : 0.4, fill: COLORS[tk.p.c], stroke: '#fff', 'stroke-width': 0.09 }, tg);
         el('circle', { r: 0.15, fill: '#fff', opacity: 0.85 }, tg);
+        if (is3d()) { el('ellipse', { cx: .06, cy: .12, rx: n > 1 ? .3 : .37, ry: .12, fill: 'rgba(0,0,0,.25)' }, tg).parentNode.prepend(tg.lastChild); el('circle', { r: n > 1 ? 0.33 : 0.4, fill: gloss(svg), 'pointer-events': 'none' }, tg); }
         if (movable) { el('circle', { r: 0.52, fill: 'none', stroke: '#111827', 'stroke-width': 0.06, class: 'l-ring' }, tg); tg.addEventListener('click', () => act('move', tk.k)); }
       }
     }

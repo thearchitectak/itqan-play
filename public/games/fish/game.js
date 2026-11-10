@@ -1,5 +1,6 @@
 // السمكة الجائعة: كُل الأسماك الأصغر منك لتكبر، واهرب من الأسماك الأكبر. مراحل في أعماق مختلفة ومعلومات عن البحر.
 import { h, t, addDict, sound, num, store, is3d } from '../../assets/js/core.js';
+import { joystick } from '../../assets/js/vpad.js';
 addDict({
   ar: { fi_start: 'ابدأ السباحة', fi_level: 'المرحلة {n}', fi_eaten: 'أكلتك سمكة أكبر منك!', fi_win: 'كبرت وأكملت المرحلة! 🎉', fi_next: 'المرحلة التالية', fi_retry: 'أعد المحاولة', fi_help: 'حرّك الفأرة أو إصبعك لتقود سمكتك. كُل الأسماك التي حولها إطار أخضر، واهرب من ذات الإطار الأحمر.', fi_fact: 'هل تعلم؟', fi_size: 'الحجم' },
   en: { fi_start: 'Start swimming', fi_level: 'Level {n}', fi_eaten: 'A bigger fish ate you!', fi_win: 'You grew up — level complete! 🎉', fi_next: 'Next level', fi_retry: 'Retry', fi_help: 'Steer with the mouse or your finger. Eat green-ringed fish, flee red-ringed ones.', fi_fact: 'Did you know?', fi_size: 'Size' },
@@ -113,7 +114,10 @@ export async function mount(root) {
     if (state === 'won') { store.set('fi-lv', Math.max(store.get('fi-lv', 0), Math.min(LEVELS.length - 1, lv + 1))); msg.append(h('h2', {}, t('fi_win')), fact, lv + 1 < LEVELS.length ? h('button', { type: 'button', class: 'btn gk-go', onclick: () => { load(lv + 1); state = 'play'; ui(); } }, t('fi_next')) : h('button', { type: 'button', class: 'btn gk-go', onclick: () => { state = 'menu'; ui(); } }, '🏆')); }
     if (state === 'over') msg.append(h('h2', {}, t('fi_eaten')), fact, h('button', { type: 'button', class: 'btn gk-go', onclick: () => { score = 0; load(lv); state = 'play'; ui(); } }, t('fi_retry')));
   }
-  view.append(h('div', { class: 'jp-stage' }, cv, msg));
+  // عصا تحكم تحت الإطار حتى لا يغطي إصبع اللاعب السمكة
+  let jx = 0, jy = 0; const stick = joystick({ size: 150, onMove: (x, y) => { jx = x; jy = y; } });
+  const jt = setInterval(() => { if (!view.isConnected) return clearInterval(jt); if ((jx || jy) && P && state === 'play') tgt = { x: P.x + jx * 160, y: P.y + jy * 160 }; }, 30);
+  view.append(h('div', { class: 'jp-stage' }, cv, msg), h('div', { class: 'jp-pads fi-pads' }, h('small', { class: 'muted' }, '🕹️'), stick));
   load(0); ui(); loop();
   return { unmount() { cancelAnimationFrame(raf); } };
 }

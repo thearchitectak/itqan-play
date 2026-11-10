@@ -1,5 +1,5 @@
 // أربعة في صف: أسقط أقراصك في الأعمدة، وأول من يصل أربعة متتالية أفقيًا أو رأسيًا أو قطريًا يفوز.
-import { h, t, addDict, sound, num } from '../../assets/js/core.js';
+import { h, t, addDict, sound, num, is3d, gloss } from '../../assets/js/core.js';
 import { tableGame } from '../../assets/js/gamekit.js';
 
 addDict({
@@ -92,6 +92,7 @@ const def = {
       const g = add('g', { class: isLast ? 'c4-drop' : '', style: `--fall:${-(r + 1) * 10 - 6}px` });
       add('circle', { cx: c * 10 + 7, cy: r * 10 + 17, r: 4.4, fill: COLORS[v.b[r][c]] }, g);
       add('circle', { cx: c * 10 + 7, cy: r * 10 + 17, r: 3, fill: 'none', stroke: 'rgba(0,0,0,.18)', 'stroke-width': .6 }, g);
+      if (is3d()) add('circle', { cx: c * 10 + 7, cy: r * 10 + 17, r: 4.4, fill: gloss(svg) }, g);
     }
     add('rect', { x: 0, y: 10, width: W * 10 + 4, height: H * 10 + 4, rx: 3, fill: 'url(#c4g)', mask: 'url(#c4m)', class: 'c4-frame' });
     // حواف الثقوب: ظل داخلي ولمعة تعطي البلاستيك سماكة
