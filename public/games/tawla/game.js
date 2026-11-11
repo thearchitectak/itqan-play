@@ -1,5 +1,5 @@
 // الطاولة (الزهر) بأنواعها الشائعة: العادة (بالضرب)، والمحبوسة (بالحبس)، والواحد والثلاثون (بلا ضرب ولا حبس).
-import { h, t, addDict, sound, num, ico, is3d, gloss } from '../../assets/js/core.js';
+import { h, t, addDict, sound, num, ico, is3d, gloss, toast } from '../../assets/js/core.js';
 import { tableGame, rnd, pick, dieFace } from '../../assets/js/gamekit.js';
 
 addDict({
@@ -315,7 +315,12 @@ function renderTawla(el, v, ui) {
       // إن كانت هناك وجهة واحدة فقط نحرك مباشرة
       const ts = [...new Set(firsts.filter(m => String(m.from) === String(a)).map(m => m.to))];
       if (ts.length === 1 && firsts.filter(m => String(m.from) === String(a)).length === 1) { const m = firsts.find(x => String(x.from) === String(a)); sel = null; sound('move'); ui.act({ type: 'move', from: a, to: m.to, d: m.d }); return; }
-    } else sel = null;
+    } else {
+      sel = null;
+      // توضيح سبب عدم الحركة بدل أن يبدو الضغط بلا أثر
+      const p = typeof a === 'number' ? v.pts[a] : null;
+      if (p && p.o === v.turn && p.n > 0 && firsts.length) toast(v.variant === '31' && firsts.every(m => String(m.from) !== String(a)) && (v.turn === 0 ? a === 24 : a === 1) ? 'في الواحد والثلاثين: حرّك القطعة الأولى حتى تصل إلى ربع الخصم، ثم تُحرَّك بقية القطع' : 'لا توجد حركة مسموحة لهذه القطعة بالزهر الحالي — جرّب قطعة أخرى', true);
+    }
     redraw();
   } : null;
   const svg = boardSvg(v, me, sel, targets, onPoint);
