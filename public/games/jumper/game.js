@@ -120,10 +120,14 @@ export async function mount(root) {
     if (left) { P.vx -= acc; P.face = -1; } if (right) { P.vx += acc; P.face = 1; }
     if (!left && !right) P.vx *= P.on ? .78 : .95;
     const mx = 3.4 * run; P.vx = Math.max(-mx, Math.min(mx, P.vx));
-    if (jump && P.on && !P.jumpHeld) { P.vy = -11.2 - Math.abs(P.vx) * .25; P.on = false; P.jumpHeld = true; sound('move'); }
-    if (!jump) { P.jumpHeld = false; if (P.vy < -4) P.vy = -4; }
-    P.vy = Math.min(13, P.vy + .55); P.on = false;
+    // قفزة أعلى وأكثر تسامحًا: مهلة بعد ترك الحافة، وحفظ ضغطة القفز قبل الهبوط بلحظات
+    if (jump && !P.jumpHeld) { P.buf = 8; P.jumpHeld = true; }
+    if (P.buf > 0 && P.coy > 0) { P.vy = -11.8 - Math.abs(P.vx) * .3; P.buf = 0; P.coy = 0; sound('move'); }
+    if (!jump) { P.jumpHeld = false; if (P.vy < -5) P.vy = -5; }
+    P.buf = Math.max(0, (P.buf || 0) - 1); P.coy = Math.max(0, (P.coy || 0) - 1);
+    P.vy = Math.min(13, P.vy + (jump && P.vy < 0 ? .42 : .6)); P.on = false;
     collide(P, P.vx, 0); collide(P, 0, P.vy, (tx, ty) => bump(tx, ty));
+    if (P.on) P.coy = 7;
     if (P.x < cam) { P.x = cam; P.vx = 0; }
     if (P.y > H) { P.big = false; hurt(); P.dead = true; }
     if (P.inv > 0) P.inv--;

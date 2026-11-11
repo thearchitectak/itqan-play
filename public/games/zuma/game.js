@@ -1,5 +1,22 @@
 // كرات الألوان (فكرة شبيهة بزوما): أطلق الكرات من الضفدع في المنتصف لتصنع ثلاث كرات أو أكثر من اللون نفسه فتختفي، قبل أن تصل السلسلة إلى الحفرة.
-import { h, t, addDict, sound, num, ico, store, is3d } from '../../assets/js/core.js';
+import { h, t, addDict, sound, num, ico, store, is3d, settings } from '../../assets/js/core.js';
+// مؤثرات صوتية حماسية خاصة باللعبة (تُولَّد بالمتصفح)
+let AC = null;
+const ac = () => { if (!settings.sound) return null; try { AC = AC || new (window.AudioContext || window.webkitAudioContext)(); if (AC.state === 'suspended') AC.resume(); return AC; } catch { return null; } };
+function tone(f0, f1, dur, type = 'sine', vol = .2, delay = 0) { const a = ac(); if (!a) return; const t0 = a.currentTime + delay, o = a.createOscillator(), g = a.createGain(); o.type = type; o.frequency.setValueAtTime(f0, t0); o.frequency.exponentialRampToValueAtTime(Math.max(20, f1), t0 + dur); g.gain.setValueAtTime(vol, t0); g.gain.exponentialRampToValueAtTime(.001, t0 + dur); o.connect(g).connect(a.destination); o.start(t0); o.stop(t0 + dur + .02); }
+function noise(dur, freq, vol = .3, delay = 0) { const a = ac(); if (!a) return; const t0 = a.currentTime + delay, n = a.createBufferSource(), b = a.createBuffer(1, a.sampleRate * dur, a.sampleRate), d = b.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] = (Math.random() * 2 - 1) * (1 - i / d.length) ** 2; n.buffer = b; const f = a.createBiquadFilter(); f.type = 'bandpass'; f.frequency.value = freq; f.Q.value = 1.2; const g = a.createGain(); g.gain.value = vol; n.connect(f).connect(g).connect(a.destination); n.start(t0); }
+const SFX = {
+  shoot: () => { tone(900, 300, .12, 'square', .07); noise(.06, 3000, .12); },
+  insert: () => { noise(.05, 2400, .35); tone(520, 380, .06, 'triangle', .12); },
+  pop: (combo) => { const base = 440 * Math.pow(1.19, Math.min(combo, 8)); [0, 1, 2].forEach(k => tone(base * [1, 1.26, 1.5][k], base * [1, 1.26, 1.5][k] * 1.02, .16, 'triangle', .16, k * .055)); noise(.18, 5200, .18); },
+  combo: (n) => { [0, 1, 2, 3].forEach(k => tone(523 * Math.pow(1.122, k + n), 523 * Math.pow(1.122, k + n) * 1.01, .14, 'square', .07, k * .07)); },
+  magnet: () => { tone(260, 900, .35, 'sawtooth', .06); tone(130, 520, .35, 'sine', .12); },
+  clack: () => { noise(.09, 1500, .55); tone(180, 70, .12, 'sine', .3); },
+  roll: () => { noise(.5, 400, .12); },
+  danger: () => { tone(110, 90, .12, 'sine', .35); tone(110, 90, .12, 'sine', .3, .16); },
+  win: () => { [523, 659, 784, 1046, 784, 1046].forEach((f, k) => tone(f, f, .22, 'square', .08, k * .12)); },
+  lose: () => { [392, 330, 262, 196].forEach((f, k) => tone(f, f * .97, .3, 'sawtooth', .08, k * .2)); },
+};
 addDict({
   ar: { zu_level: 'المرحلة {n}', zu_score: 'النقاط {n}', zu_start: 'ابدأ', zu_win: 'نظّفت المسار! 🎉', zu_lose: 'وصلت الكرات إلى الحفرة!', zu_next: 'المرحلة التالية', zu_retry: 'أعد المحاولة', zu_swap: 'بدّل الكرة', zu_help: 'وجّه بالفأرة أو بإصبعك واضغط لإطلاق الكرة. اضغط زر المسافة أو زر التبديل لتبديل الكرة التالية.', zu_mode: 'النمط', zu_colors: 'ألوان', zu_math: 'أعداد (مجموعها 10)' },
   en: { zu_level: 'Level {n}', zu_score: 'Score {n}', zu_start: 'Start', zu_win: 'Path cleared! 🎉', zu_lose: 'The balls reached the hole!', zu_next: 'Next level', zu_retry: 'Retry', zu_swap: 'Swap', zu_help: 'Aim and tap to shoot. Space or Swap switches balls.', zu_mode: 'Mode', zu_colors: 'Colours', zu_math: 'Numbers (make 10)' },
@@ -28,7 +45,7 @@ export async function mount(root) {
     for (let i = 0; i < total; i++) { let c; do { c = Math.floor(Math.random() * nColors()); } while (i >= 2 && chain[i - 1].c === c && chain[i - 2].c === c); chain.push({ c, s: -i * D }); }
     chain.reverse(); // الفهرس 0 = آخر السلسلة (الأبعد عن الحفرة)
     for (let i = 0; i < chain.length; i++) chain[i].s = -(chain.length - 1 - i) * D;
-    S = { P, chain, shots: [], cur: 0, next: 0, speed: 0.55 + level * .06, intro: 220, t: 0, pops: [] };
+    S = { P, chain, shots: [], cur: 0, next: 0, speed: 0.55 + level * .06, intro: 220, t: 0, pops: [], texts: [], combo: 0, shake: 0, beat: 0 }; SFX.roll();
     S.cur = newColor(chain); S.next = newColor(chain);
     cancelAnimationFrame(raf); loop(); draw();
   }
@@ -42,17 +59,40 @@ export async function mount(root) {
     if (mode === 'math') rng = mathPair(ch, i); else { const [a, b] = groupAround(ch, i); if (b - a + 1 >= 3) rng = [a, b]; }
     if (!rng) return false;
     const [a, b] = rng; for (let k = a; k <= b; k++) { const [x, y] = at(S.P, ch[k].s); S.pops.push({ x, y, c: ch[k].c, t: 0 }); }
-    score += (b - a + 1) * 10; ch.splice(a, b - a + 1); sound('capture'); return true;
+    S.combo = (S.combo || 0) + 1; const pts = (b - a + 1) * 10 * S.combo; score += pts;
+    const [mx, my] = at(S.P, ch[Math.floor((a + b) / 2)].s); S.texts.push({ x: mx, y: my, s: S.combo > 1 ? `+${pts}  ×${S.combo}` : `+${pts}`, t: 0, big: S.combo > 1 });
+    ch.splice(a, b - a + 1); SFX.pop(S.combo); if (S.combo > 1) { SFX.combo(S.combo); S.shake = 10; }
+    // الجزء الأمامي ينجذب للخلف إذا تطابق لون الطرفين
+    if (a > 0 && a < ch.length && ch[a].c === ch[a - 1].c && mode !== 'math') { ch[a].mag = true; SFX.magnet(); }
+    return true;
   }
   function loop() {
     raf = requestAnimationFrame(loop);
     if (!S || over) { draw(); return; }
     const ch = S.chain; S.t++;
     const sp = S.intro > 0 ? 3.2 : S.speed; if (S.intro > 0) S.intro--;
-    if (ch.length) { ch[0].s += sp; for (let i = 1; i < ch.length; i++) if (ch[i].s < ch[i - 1].s + D) ch[i].s = ch[i - 1].s + D; }
-    // الكرات التي تلتقي بعد فجوة قد تُكوّن مجموعة
-    for (let i = 1; i < ch.length; i++) if (ch[i].s - ch[i - 1].s <= D + .5 && ch[i].gap) { ch[i].gap = false; if (tryPop(i)) break; }
-    for (let i = 1; i < ch.length; i++) if (ch[i].s - ch[i - 1].s > D + 2) ch[i].gap = true;
+    // حركة السلسلة على شكل أجزاء: الجزء الخلفي يُدفع، والأجزاء الأمامية تواصل السير ولا تتوقف،
+    // وإذا تطابق لون طرفي الفجوة ينجذب الجزء الأمامي للخلف كالمغناطيس حتى يرتطم
+    if (ch.length) {
+      const segs = []; let a = 0;
+      for (let i = 1; i <= ch.length; i++) if (i === ch.length || ch[i].s - ch[i - 1].s > D + 1) { segs.push([a, i - 1]); a = i; }
+      segs.forEach(([a, b], k) => {
+        let v = sp;
+        if (k > 0) {
+          const head = ch[a], prev = ch[a - 1];
+          if (mode !== 'math' && head.c === prev.c) { head.mag = true; head.v = Math.max(-11, (head.v ?? sp) - .55); v = head.v; }
+          else { head.mag = false; head.v = sp; }
+        }
+        for (let i = a; i <= b; i++) ch[i].s += v;
+      });
+      for (let i = 1; i < ch.length; i++) if (ch[i].s < ch[i - 1].s + D) {
+        const hit = ch[i].mag; ch[i].s = ch[i - 1].s + D;
+        if (hit) { ch[i].mag = false; ch[i].v = sp; SFX.clack(); S.shake = Math.max(S.shake, 6); if (!tryPop(i)) S.combo = 0; break; }
+      }
+    }
+    // نبض الخطر قرب الحفرة
+    if (ch.length && ch[ch.length - 1].s > S.P.total * .82 && ++S.beat % 45 === 0) SFX.danger();
+    S.texts.forEach(x => x.t++); S.texts = S.texts.filter(x => x.t < 50); if (S.shake > 0) S.shake -= .6;
     // المقذوفات
     for (const b of S.shots) {
       b.x += b.vx; b.y += b.vy;
@@ -63,13 +103,13 @@ export async function mount(root) {
         const idx = ahead ? i + 1 : i; const sNew = ahead ? ch[i].s + D : ch[i].s;
         ch.splice(idx, 0, { c: b.c, s: sNew });
         for (let k = idx + 1; k < ch.length; k++) if (ch[k].s < ch[k - 1].s + D) ch[k].s = ch[k - 1].s + D;
-        b.dead = true; if (!tryPop(idx)) sound('place');
+        b.dead = true; S.combo = 0; if (!tryPop(idx)) SFX.insert();
         break; } }
     }
     S.shots = S.shots.filter(b => !b.dead);
     S.pops.forEach(p => p.t++); S.pops = S.pops.filter(p => p.t < 20);
-    if (!ch.length) { over = 'win'; level++; store.set('zu-level', level); sound('win'); ui(); }
-    else if (ch[ch.length - 1].s >= S.P.total) { over = 'lose'; sound('lose'); ui(); }
+    if (!ch.length) { over = 'win'; level++; store.set('zu-level', level); SFX.win(); ui(); }
+    else if (ch[ch.length - 1].s >= S.P.total) { over = 'lose'; SFX.lose(); ui(); }
     if (S.cur != null && ch.length && !ch.some(b => b.c === S.cur) && mode !== 'math') S.cur = newColor(ch);
     draw();
   }
@@ -87,8 +127,9 @@ export async function mount(root) {
   }
   const shade = (hex) => { const n = parseInt(hex.slice(1), 16); const r = (n >> 16) * .55, gg = (n >> 8 & 255) * .55, b = (n & 255) * .55; return `rgb(${r|0},${gg|0},${b|0})`; };
   function draw() {
-    g.fillStyle = '#123524'; g.fillRect(0, 0, W, H);
+    g.setTransform(1, 0, 0, 1, 0, 0); g.fillStyle = '#123524'; g.fillRect(0, 0, W, H);
     if (!S) return;
+    if (S.shake > 0) g.setTransform(1, 0, 0, 1, (Math.random() - .5) * S.shake, (Math.random() - .5) * S.shake);
     g.lineWidth = D + 10; g.lineCap = 'round'; g.strokeStyle = '#a16207'; g.beginPath(); S.P.pts.forEach(([x, y], i) => i ? g.lineTo(x, y) : g.moveTo(x, y)); g.stroke();
     g.lineWidth = D + 2; g.strokeStyle = '#d9b26a'; g.stroke();
     const end = S.P.pts[S.P.pts.length - 1]; g.fillStyle = '#0b0b0b'; g.beginPath(); g.arc(end[0], end[1], D * .9, 0, Math.PI * 2); g.fill();
@@ -109,9 +150,10 @@ export async function mount(root) {
     ball(CX + Math.cos(aim) * 30, CY + Math.sin(aim) * 30, S.cur, D / 2);
     ball(CX, CY + 8, S.next, D / 3);
     g.setLineDash([4, 8]); g.strokeStyle = 'rgba(255,255,255,.35)'; g.lineWidth = 2; g.beginPath(); g.moveTo(CX + Math.cos(aim) * 50, CY + Math.sin(aim) * 50); g.lineTo(CX + Math.cos(aim) * 360, CY + Math.sin(aim) * 360); g.stroke(); g.setLineDash([]);
+    for (const x of S.texts) { g.globalAlpha = 1 - x.t / 50; g.font = `900 ${x.big ? 34 + Math.min(10, x.t) : 22}px system-ui`; g.textAlign = 'center'; g.lineWidth = 5; g.strokeStyle = '#000'; g.fillStyle = x.big ? '#fde047' : '#fff'; g.strokeText(x.s, x.x, x.y - 20 - x.t); g.fillText(x.s, x.x, x.y - 20 - x.t); g.globalAlpha = 1; }
     g.fillStyle = '#fff'; g.font = '700 22px system-ui'; g.textAlign = 'left'; g.fillText('⭐ ' + score, 16, 32);
   }
-  function shoot() { if (!S || over || S.shots.length > 1) return; S.shots.push({ x: CX + Math.cos(aim) * 30, y: CY + Math.sin(aim) * 30, vx: Math.cos(aim) * 14, vy: Math.sin(aim) * 14, c: S.cur }); S.cur = S.next; S.next = newColor(S.chain); sound('move'); }
+  function shoot() { if (!S || over || S.shots.length > 1) return; S.shots.push({ x: CX + Math.cos(aim) * 30, y: CY + Math.sin(aim) * 30, vx: Math.cos(aim) * 14, vy: Math.sin(aim) * 14, c: S.cur }); S.cur = S.next; S.next = newColor(S.chain); SFX.shoot(); }
   function swap() { if (!S) return; [S.cur, S.next] = [S.next, S.cur]; }
   const pos = (e) => { const r = cv.getBoundingClientRect(); return [(e.clientX - r.left) / r.width * W, (e.clientY - r.top) / r.height * H]; };
   cv.addEventListener('pointermove', (e) => { const [x, y] = pos(e); aim = Math.atan2(y - CY, x - CX); });
