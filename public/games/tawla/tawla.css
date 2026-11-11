@@ -3,8 +3,10 @@
 .tw-board { min-height: 0; display: grid; place-items: center; container-type: size; }
 .tw-svg { width: min(100cqw, 100cqh * 1.36); height: auto; border-radius: 10px; box-shadow: 0 10px 24px rgba(0,0,0,.5); }
 .tw-hit { cursor: pointer; }
+.tw-svg { touch-action: none; user-select: none; -webkit-user-select: none; }
+.tw-svg.dragging, .tw-svg.dragging .tw-hit { cursor: grabbing; }
 .tw-sel { fill: rgba(250, 204, 21, .28); stroke: #facc15; stroke-width: .06; pointer-events: none; }
-.tw-target { fill: rgba(34, 197, 94, .3); stroke: #22c55e; stroke-width: .07; stroke-dasharray: .25 .15; cursor: pointer; animation: twpulse 1s ease-in-out infinite; }
+.tw-target { pointer-events: none; fill: rgba(34, 197, 94, .3); stroke: #22c55e; stroke-width: .07; stroke-dasharray: .25 .15; cursor: pointer; animation: twpulse 1s ease-in-out infinite; }
 @keyframes twpulse { 50% { fill: rgba(34, 197, 94, .12); } }
 .tw-ck { pointer-events: none; }
 .tw-ck circle:first-child { filter: drop-shadow(0 .05px .05px rgba(0,0,0,.6)); }

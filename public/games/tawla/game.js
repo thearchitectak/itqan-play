@@ -12,7 +12,7 @@ addDict({
 <li>يجب أن تستخدم الزهرين إن أمكن، وإن أمكن واحد فقط فالأكبر.</li><li>لا تبدأ الأكل حتى تكون كل قطعك في بيتك.</li></ol>
 <h4>العادة</h4><p>لا يجوز النزول على خانة فيها قطعتان أو أكثر للمنافس. إن نزلت على قطعة منفردة للمنافس «ضربتها» فتخرج إلى الوسط، ويجب عليه إدخالها قبل أي حركة أخرى. الفوز بنقطة، و«مارس» (قبل أن يأكل المنافس أي قطعة) بنقطتين.</p>
 <h4>المحبوسة</h4><p>تبدأ القطع كلها في خانة واحدة. إن نزلت على قطعة منفردة للمنافس «حبستها» تحت قطعتك، فلا تتحرك حتى تغادر الخانة. النقاط مثل العادة.</p>
-<h4>الواحد والثلاثون</h4><p>تبدأ القطع مثل المحبوسة، لكن لا يجوز النزول على أي خانة فيها قطعة للمنافس، فلا ضرب ولا حبس. الفائز يأخذ نقطة عن كل قطعة بقيت لمنافسه، والمباراة إلى 31 نقطة.</p>
+<h4>الواحد والثلاثون</h4><p>تبدأ القطع مثل المحبوسة، لكن لا يجوز النزول على أي خانة فيها قطعة للمنافس، فلا ضرب ولا حبس. ولا يجوز تحريك أي قطعة أخرى من الكومة حتى تصل القطعة الأولى إلى ربع الخصم (المربعات الست التي بدأ منها). الفائز يأخذ نقطة عن كل قطعة بقيت لمنافسه، والمباراة إلى 31 نقطة.</p>
 <h4>ماذا تتعلم؟</h4><p>الجمع الذهني السريع، وحساب الاحتمالات، والتخطيط وإدارة المخاطرة.</p>`,
   },
   en: {
@@ -56,9 +56,18 @@ function singleMoves(variant, pos, P, d) {
   if (variant === 'aada' && pos.bar[P]) { const a = ab(P, 25 - d); if (canLand(variant, pos, P, a)) res.push({ from: 'bar', to: a, d }); return res; }
   const home = allHome(pos, P);
   let maxQ = 0; if (home) for (let a = 1; a <= 24; a++) if (pos.pts[a].o === P && pos.pts[a].n > 0) maxQ = Math.max(maxQ, pc(P, a));
+  // الواحد والثلاثون: قطعة واحدة فقط تخرج من الكومة حتى تصل إلى ربع الخصم
+  let only = null;
+  if (variant === '31' && !pos.off[P]) {
+    let reached = false, runner = false;
+    for (let a = 1; a <= 24; a++) { const p = pos.pts[a]; if (p.o === P && p.n > 0) { const q = pc(P, a); if (q <= 6) reached = true; else if (q < 24) runner = true; } }
+    if (!reached) only = runner ? 'runner' : 'start';
+  }
   for (let a = 1; a <= 24; a++) {
     const p = pos.pts[a]; if (p.o !== P || p.n === 0) continue;
     const q = pc(P, a), tq = q - d;
+    if (only === 'runner' && q === 24) continue;
+    if (only === 'start' && q !== 24) continue;
     if (tq >= 1) { const ta = ab(P, tq); if (canLand(variant, pos, P, ta)) res.push({ from: a, to: ta, d }); }
     else if (home && (tq === 0 || q === maxQ)) res.push({ from: a, to: 'off', d });
   }
@@ -272,7 +281,7 @@ function boardSvg(v, viewer, sel, targets, onPoint) {
       if (c.pinned) S('text', { x, y: cy + .17, 'text-anchor': 'middle', 'font-size': .45, fill: c.P ? '#fff' : '#111' }, g).textContent = '🔒';
     });
     if (stack.length > 5) S('text', { x, y: top ? 4.9 : H - 4.6, 'text-anchor': 'middle', 'font-size': .5, 'font-weight': 900, fill: '#3b2412' }).textContent = num(p.n);
-    const hit = S('rect', { x: slotX(i), y: top ? 0 : H - 5.2, width: 1, height: 5.2, fill: 'transparent', class: 'tw-hit' });
+    const hit = S('rect', { x: slotX(i), y: top ? 0 : H - 5.2, width: 1, height: 5.2, fill: '#fff', 'fill-opacity': 0, class: 'tw-hit', 'data-a': a });
     if (sel === a) S('rect', { x: slotX(i) + .04, y: top ? .02 : H - 5.18, width: .92, height: 5.16, rx: .1, class: 'tw-sel' });
     if (targets.includes(a)) S('rect', { x: slotX(i) + .04, y: top ? .02 : H - 5.18, width: .92, height: 5.16, rx: .1, class: 'tw-target' });
     if (onPoint) hit.addEventListener('click', () => onPoint(a));
@@ -283,7 +292,7 @@ function boardSvg(v, viewer, sel, targets, onPoint) {
   if (onPoint && v.bar[viewer]) { const r = S('rect', { x: 6, y: H / 2, width: 1, height: H / 2, fill: 'transparent' }); r.addEventListener('click', () => onPoint('bar')); if (sel === 'bar') S('rect', { x: 6.04, y: H / 2, width: .92, height: H / 2 - .05, rx: .1, class: 'tw-sel' }); }
   // المأكول
   for (const P of [0, 1]) { const mine = P === viewer; for (let k = 0; k < v.off[P]; k++) S('rect', { x: 13.35, y: mine ? H - .35 - k * .33 : .05 + k * .33, width: 1.5, height: .28, rx: .06, fill: COLORS[P], stroke: '#000', 'stroke-width': .02 }); }
-  if (targets.includes('off')) { const r = S('rect', { x: 13.25, y: H / 2, width: 1.7, height: H / 2 - .05, rx: .15, class: 'tw-target' }); if (onPoint) r.addEventListener('click', () => onPoint('off')); }
+  if (targets.includes('off')) { const r = S('rect', { x: 13.25, y: H / 2, width: 1.7, height: H / 2 - .05, rx: .15, class: 'tw-target', style: 'pointer-events:all', 'data-a': 'off' }); if (onPoint) r.addEventListener('click', () => onPoint('off')); }
   void view;
   return svg;
 }
@@ -310,6 +319,19 @@ function renderTawla(el, v, ui) {
     redraw();
   } : null;
   const svg = boardSvg(v, me, sel, targets, onPoint);
+  // السحب والإفلات: اسحب القطعة من خانتها وأفلتها على الخانة المضيئة
+  if (onPoint) {
+    let from = null;
+    const pt = (e) => { const el = document.elementFromPoint(e.clientX, e.clientY)?.closest('[data-a]'); if (!el) return null; const k = el.getAttribute('data-a'); return k === 'off' ? 'off' : +k; };
+    svg.addEventListener('pointerdown', (e) => { const a = pt(e); if (a != null && firsts.some(m => String(m.from) === String(a))) { from = a; svg.classList.add('dragging'); } });
+    svg.addEventListener('pointerup', (e) => {
+      svg.classList.remove('dragging'); const a = pt(e), f = from; from = null;
+      if (f == null || a == null || String(a) === String(f)) return; // نقرة عادية يعالجها حدث click
+      const opts = firsts.filter(m => String(m.from) === String(f) && String(m.to) === String(a));
+      if (!opts.length) { sound('error'); return; }
+      const m = opts.sort((x, y) => x.d - y.d)[0]; sel = null; sound(m.to === 'off' ? 'capture' : 'move'); ui.act({ type: 'move', from: f, to: m.to, d: m.d });
+    });
+  }
   const opp = 1 - me;
   const dbl = v.dice && v.dice[0] === v.dice[1];
   const dice = v.dice ? h('div', { class: 'tw-dice', key: v.rollId }, v.dice.map((d) => dieFace(d, (v.phase === 'move' && (dbl ? v.left.length : v.left.includes(d)) ? '' : ' used'))), dbl && v.phase === 'move' ? h('b', { class: 'tw-x' }, '×', num(v.left.length)) : null) : null;
