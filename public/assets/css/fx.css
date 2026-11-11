@@ -113,3 +113,5 @@ body.v3d .game-card .art-svg svg { filter: drop-shadow(0 6px 6px rgba(0,0,0,.18)
 @media (max-width: 720px) { .site-header .nav { gap: 0; min-width: 0; } .site-header .nav .vt button { padding: 3px 6px; font-size: 11px; } .site-header .brand { min-width: 0; overflow: hidden; } }
 @media (max-width: 420px) { .site-header .nav a[href="#about-me"], .site-header .nav a[href="#support-us"] { display: none; } }
 html, body { overflow-x: clip; }
+/* أيقونات ثلاثية الأبعاد */
+.i3 { display: inline-block; width: 1.18em; height: 1.18em; line-height: 1.18em; vertical-align: -.22em; background-repeat: no-repeat; color: transparent !important; -webkit-text-fill-color: transparent; overflow: hidden; text-shadow: none !important; font-size: 1em; user-select: none; filter: drop-shadow(0 .05em .06em rgba(0,0,0,.18)); font-size: 1em !important; padding: 0 !important; margin: 0 !important; border: 0 !important; background-color: transparent !important; box-shadow: none !important; animation: none; position: static !important;}

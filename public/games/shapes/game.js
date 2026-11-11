@@ -67,11 +67,11 @@ export async function mount(root) {
     const board = h('div', { class: 'sh-board', style: { '--w': W, '--h': H } });
     for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
       const k = x + ',' + y; const inR = cells.has(k); const p = occ.get(k);
-      const c = h('button', { type: 'button', class: 'sh-c' + (inR ? '' : ' out') + (ghost.has(k) ? ' ghost' : ''), disabled: !inR, style: p ? { background: p.color } : ghost.has(k) ? { background: P.pieces[sel].color } : null,
+      const c = h('button', { type: 'button', class: 'sh-c' + (inR ? '' : ' out') + (p ? ' fill' : '') + (ghost.has(k) ? ' ghost' : ''), disabled: !inR, style: p ? { '--pc': p.color } : ghost.has(k) ? { '--pc': P.pieces[sel].color } : null,
         onclick: () => place(x, y), onpointerenter: () => { if (sel != null && (!hover || hover[0] !== x || hover[1] !== y)) { hover = [x, y]; draw(); } } });
       board.append(c);
     }
-    const mini = (p) => { const w = Math.max(...p.shape.map(c => c[0])) + 1, hh = Math.max(...p.shape.map(c => c[1])) + 1; const g = h('div', { class: 'sh-mini', style: { '--w': w, '--h': hh } }); for (let y = 0; y < hh; y++) for (let x = 0; x < w; x++) g.append(h('i', { style: p.shape.some(c => c[0] === x && c[1] === y) ? { background: p.color } : null })); return g; };
+    const mini = (p) => { const w = Math.max(...p.shape.map(c => c[0])) + 1, hh = Math.max(...p.shape.map(c => c[1])) + 1; const g = h('div', { class: 'sh-mini', style: { '--w': w, '--h': hh } }); for (let y = 0; y < hh; y++) for (let x = 0; x < w; x++) g.append(h('i', { style: p.shape.some(c => c[0] === x && c[1] === y) ? { '--pc': p.color } : null, class: p.shape.some(c => c[0] === x && c[1] === y) ? 'f' : '' })); return g; };
     const tray = h('div', { class: 'sh-tray' }, P.pieces.filter(p => !p.placed).map(p => h('button', { type: 'button', class: 'sh-piece' + (sel === p.id ? ' sel' : ''), onclick: () => { sel = sel === p.id ? null : p.id; draw(); } }, mini(p))));
     const sp = sel != null ? P.pieces[sel] : null;
     view.append(h('div', { class: 'sh-top' }, h('b', {}, t('sh_level', { n: num(level) })),

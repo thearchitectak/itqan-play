@@ -110,7 +110,6 @@ const GROUP_LABEL = { 2: '2', 3: '3', 4: '4', 5: '5', 6: '6', 7: '7', 8: '8 / 9'
 const PRODUCTS = new Set(FACTS.map(f => f.p));
 // ألوان هادئة متباينة لكل مجموعة
 const TABLE_COLORS = { 2: '#d64545', 4: '#2f6fd6', 6: '#e09b00', 8: '#3c9a3c', 7: '#8a3fb5', 5: '#d63a83', 3: '#00897b' };
-const FRUITS = ['🍎', '🍉', '🍓', '🍍', '🍊', '🍇', '🍒', '🍑', '🍐', '🥝', '🍌', '🍋'];
 const AVATARS = ['🦁', '🐯', '🐼', '🦊', '🐸', '🐵', '🐧', '🦄', '🐨', '🐙', '🦉', '🐬'];
 const PCOLORS = ['#0f766e', '#dc2626', '#2563eb', '#9333ea'];
 const shuffle = (arr) => { const a = arr.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
@@ -287,6 +286,7 @@ export async function mount(root, ctx) {
         h('button', { class: 'btn m-go', type: 'button', onclick: () => { if (net.players.length < 2) { toast(t('m_needTwo'), true); return; } startOnline(); } }, ico('play', 18), t('m_startOnline')))) : null;
     view.append(h('div', { class: 'panel m-lobby' },
       h('div', { class: 'row' }, h('h2', { class: 'grow', style: { margin: 0 } }, ico('globe', 20), ' ', t('m_lobby')), h('button', { class: 'btn ghost sm', type: 'button', onclick: () => { closeNet(); showSetup(); } }, t('m_leave'))),
+      net.comms ? net.comms.bar() : null,
       h('div', { class: 'm-codes' }, h('div', {}, h('small', { class: 'muted' }, t('m_roomCode')), h('b', { dir: 'ltr' }, net.code)), h('div', {}, h('small', { class: 'muted' }, t('m_roomPass')), h('b', { dir: 'ltr' }, net.pass))),
       list,
       h('p', { class: 'muted m-wait' }, h('span', { class: 'm-spin' }), net.role === 'host' ? t('m_waitingPlayers') : t('m_waitingHost')),
@@ -573,8 +573,8 @@ export async function mount(root, ctx) {
       if (helperVal != null && !cell?.card && f.p === helperVal) cls.push('hint');
       if (G0?.level === 2 && setup.helper && !G0.active.has(f.g)) cls.push('dim');
       const el = h('div', { class: cls.join(' '), style: { '--tc': TABLE_COLORS[f.g] }, 'data-i': i, 'data-g': f.g, 'data-row': Math.floor(i / 6), onclick: preview ? null : () => onCell(i) },
-        op('b'), op('t'), op('l'), op('r'),
-        h('div', { class: 'slot' }, cell?.card ? cardEl(cell.card, { mini: true }) : h('span', { class: 'fruit' }, FRUITS[i % FRUITS.length])));
+        ...(preview ? [op('b'), op('t'), op('l'), op('r'), h('div', { class: 'slot' }, h('span', { class: 'pdot' }))]
+          : [h('span', { class: 'op c', dir: 'ltr' }, `${sideNum(f.a, 'b', mode)} × ${sideNum(f.b, 'b', mode)}`), h('div', { class: 'slot' }, cell?.card ? cardEl(cell.card, { mini: true }) : null)]));
       return el;
     }));
   }
@@ -613,6 +613,7 @@ export async function mount(root, ctx) {
       }
     } else if (!G.over) handBox.append(h('div', { class: 'm-reveal' }, h('span', { class: 'm-big-av thinking' }, me.avatar), h('b', {}, t('m_turnOf', { name: me.name }), ' …')));
     view.append(
+      G.net && net?.comms ? h('div', { class: 'row no-print' }, net.comms.bar()) : '',
       h('div', { class: 'm-top row no-print' },
         G.level === 1 ? h('span', { class: 'tag' }, ico('layers', 13), ' ', t('m_deck'), ': ', num(G.deck.length)) : h('span', { class: 'tag m-clock' }, clock()),
         h('span', { class: 'tag' }, t('m_filled'), ': ', num(filled), ' / ', num(36)),
@@ -635,14 +636,16 @@ export async function mount(root, ctx) {
   }
 
   // ================= الطباعة =================
+  const chunk = (a, n) => Array.from({ length: Math.ceil(a.length / n) }, (_, i) => a.slice(i * n, i * n + n));
   function printSheet() {
     document.querySelector('.m-print')?.remove();
-    const deck = makeDeck(14).sort((a, b) => (a.black - b.black) || (a.table || 0) - (b.table || 0) || a.v - b.v);
+    const deck = makeDeck(14).sort((a, b) => (!!a.black - !!b.black) || (a.table || 0) - (b.table || 0) || a.v - b.v);
     const sheet = h('div', { class: 'm-print' },
       h('section', { class: 'pp' }, h('div', { class: 'pp-title' }, `${t('siteName')} — ${tr({ ar: 'لوحة جدول الضرب', en: 'Times Tables Board' })}`), boardEl(null, true)),
-      h('section', { class: 'pp' }, h('div', { class: 'pp-title' }, tr({ ar: 'البطاقات — قصّها على الخطوط', en: 'Cards — cut along the lines' })),
-        h('div', { class: 'pcards' }, deck.map(c => h('div', { class: 'pcard' + (c.black ? ' black' : ''), style: { '--cc': c.black ? '#1f2937' : TABLE_COLORS[c.table] } },
-          h('span', { class: 'c tl' }, AR(c.v)), h('span', { class: 'c tr' }, String(c.v)), h('span', { class: 'v' }, num(c.v)), h('span', { class: 'c bl' }, String(c.v)), h('span', { class: 'c br' }, AR(c.v)))))),
+      ...chunk(deck, 9).map((page, pi) => h('section', { class: 'pp pcard-page' },
+        h('div', { class: 'pp-title sm' }, tr({ ar: `البطاقات (${pi + 1}) — قصّ على الخط المتقطع، واترك هامشًا حول البطاقة عند التغليف`, en: `Cards (${pi + 1}) — cut along the dashed lines; leave a margin when laminating` })),
+        h('div', { class: 'pcards' }, page.map(c => h('div', { class: 'pcut' }, h('div', { class: 'pcard' + (c.black ? ' black' : ''), style: { '--cc': c.black ? '#1f2937' : TABLE_COLORS[c.table] } },
+          h('span', { class: 'c tl' }, AR(c.v)), h('span', { class: 'c tr' }, String(c.v)), h('span', { class: 'v' }, num(c.v)), h('span', { class: 'brand' }, t('siteName')), h('span', { class: 'c bl' }, String(c.v)), h('span', { class: 'c br' }, AR(c.v)))))))),
       h('section', { class: 'pp' }, h('div', { class: 'pp-title' }, t('m_rules')), h('div', { class: 'm-rules', html: t('m_rulesText') })));
     document.body.append(sheet); document.body.classList.add('m-printing');
     const done = () => { document.body.classList.remove('m-printing'); sheet.remove(); window.removeEventListener('afterprint', done); };

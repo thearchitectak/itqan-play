@@ -270,4 +270,22 @@ export const GAMES = [
     desc: { ar: "لعبة العقارات الشهيرة: ارمِ النردين واشترِ المدن العربية والمطارات والشركات، واجمع الإيجار، وابنِ البيوت والفنادق، واحذر السجن وبطاقات الحظ.", en: "The classic property game with Arab cities: buy, rent, build and avoid jail." },
     players: { ar: "من 2 إلى 4 لاعبين", en: "2–4 players" }, tags: [{ ar: "أونلاين", en: "Online" }, { ar: "حساب المال", en: "Money math" }],
   },
+  {
+    id: 'restaurant', module: '../../games/restaurant/game.js', icon: 'hand-heart', color: 'linear-gradient(135deg,#f97316,#dc2626)', solid: '#f97316', status: 'ready',
+    field: { ar: "ريادة الأعمال والاستثمار", en: "Business & investing" }, title: { ar: "مطعمي الناجح", en: "My Restaurant Tycoon" },
+    desc: { ar: "أدر مطعمك: اطهُ الأطباق وقدّمها للزبائن قبل أن ينفد صبرهم، ثم استثمر أرباحك في أصناف جديدة ومحطات أسرع وموظفين وإعلانات، وتعلّم الربح والهدر ومدة استرداد الاستثمار.", en: "Cook and serve customers before they lose patience, then invest profits in new dishes, faster stations, staff and ads — learning profit, waste and payback." },
+    players: { ar: "لاعب واحد", en: "1 player" }, tags: [{ ar: "خدمة الزبائن", en: "Customer service" }, { ar: "الاستثمار", en: "Investing" }, { ar: "8+ سنوات", en: "Ages 8+" }],
+  },
+  {
+    id: 'farm', module: '../../games/farm/game.js', icon: 'sparkles', color: 'linear-gradient(135deg,#84cc16,#15803d)', solid: '#84cc16', status: 'ready',
+    field: { ar: "ريادة الأعمال والاستثمار", en: "Business & investing" }, title: { ar: "المزرعة السعيدة", en: "Happy Farm" },
+    desc: { ar: "ازرع المحاصيل واحصدها، وربِّ الدجاج والخراف والأبقار، وحوّل منتجاتك في المصانع إلى منتجات أغلى، وبِع في سوق تتغير أسعاره ولبِّ طلبات الزبائن، واستثمر أرباحك في الأرض والحيوانات والري.", en: "Grow crops, raise animals, process products for more value, trade in a changing market and invest your profits wisely." },
+    players: { ar: "لاعب واحد", en: "1 player" }, tags: [{ ar: "القيمة المضافة", en: "Value added" }, { ar: "العرض والطلب", en: "Supply & demand" }, { ar: "7+ سنوات", en: "Ages 7+" }],
+  },
+  {
+    id: 'solitaire', module: '../../games/solitaire/game.js', icon: 'layers', color: 'linear-gradient(135deg,#16a34a,#14532d)', solid: '#16a34a', status: 'ready',
+    field: { ar: "التفكير والتخطيط", en: "Logic & planning" }, title: { ar: "سوليتير — ترتيب الكوتشينة", en: "Solitaire (Klondike)" },
+    desc: { ar: "لعبة ترتيب الأوراق الشهيرة كما في ويندوز: رتّب الأوراق في الأعمدة بالتناوب بين الأحمر والأسود من الشايب إلى الآس، وانقلها إلى الأساسات حسب النوع. سحب وإفلات، نقر ذكي، تراجع، تلميح، وسحب ورقة أو ثلاث.", en: "The classic Windows card game: build columns in alternating colours and move every suit to the foundations. Drag & drop, smart tap, undo, hints, draw one or three." },
+    players: { ar: "لاعب واحد", en: "1 player" }, tags: [{ ar: "الصبر والتخطيط", en: "Patience & planning" }, { ar: "الكوتشينة", en: "Cards" }, { ar: "كل الأعمار", en: "All ages" }],
+  },
 ];

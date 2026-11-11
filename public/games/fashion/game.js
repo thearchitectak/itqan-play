@@ -1,5 +1,6 @@
 // مصممة الأزياء المبدعة: صممي الملابس واختاري الألوان والأقمشة والنقوش والإكسسوارات، واحفظي مجموعتك، ثم اعرضيها في عرض أزياء افتراضي وتعرّفي على تناسق الألوان وتكلفة الإنتاج والربح.
 import { h, t, addDict, sound, num, ico, store, toast } from '../../assets/js/core.js';
+import { portraitStudio } from './portrait.js';
 addDict({
   ar: { fs_top: 'القطعة العلوية', fs_bottom: 'القطعة السفلية', fs_dress: 'فستان', fs_color: 'اللون', fs_pattern: 'النقش', fs_acc: 'الإكسسوارات', fs_save: 'احفظي في المجموعة', fs_show: 'ابدئي عرض الأزياء ✨', fs_coll: 'مجموعتي', fs_harmony: 'تناسق الألوان', fs_cost: 'تكلفة القماش', fs_price: 'سعر البيع', fs_part: 'الجزء', fs_skin: 'لون البشرة', fs_hair: 'الشعر',
     fs_h3: 'رائع! ألوان متكاملة أو متجاورة على دائرة الألوان', fs_h2: 'جيد: الألوان المحايدة تناسب كل شيء', fs_h1: 'جربي ألوانًا متجاورة أو متقابلة على دائرة الألوان', fs_saved: 'حُفظ التصميم في مجموعتك', fs_full: 'المجموعة ممتلئة (8 تصاميم)، احذفي تصميمًا',
@@ -146,7 +147,13 @@ export function figure(d, small = false) {
 }
 export async function mount(root) {
   if (!document.getElementById('fs-css')) document.head.append(h('link', { id: 'fs-css', rel: 'stylesheet', href: new URL('./fashion.css', import.meta.url).href }));
+  // وضعان: استوديو الجمال برسومات احترافية (افتراضي)، ومصممة الأزياء بالجسم الكامل
+  let mode = store.get('fs-mode', 'studio');
+  if (!document.getElementById('fp-css')) document.head.append(h('link', { id: 'fp-css', rel: 'stylesheet', href: new URL('./portrait.css', import.meta.url).href }));
+  const modes = h('div', { class: 'fs-modes' }); root.append(modes);
+  const studioBox = h('div'); root.append(studioBox);
   const view = h('div', { class: 'fs' }); root.append(view);
+  const setMode = (m) => { mode = m; store.set('fs-mode', m); modes.innerHTML = ''; modes.append(...[['studio', '💖 استوديو الجمال'], ['design', '✂️ مصممة الأزياء']].map(([k, n]) => h('button', { type: 'button', class: mode === k ? 'on' : '', onclick: () => setMode(k) }, n))); studioBox.style.display = m === 'studio' ? '' : 'none'; view.style.display = m === 'studio' ? 'none' : ''; if (m === 'studio' && !studioBox.firstChild) portraitStudio(studioBox); };
   let d = store.get('fs-cur', { top: 'blouse', bottom: 'long', dress: 'none', c1: '#ec4899', c2: '#1e3a8a', c3: '#facc15', p1: 'flowers', p2: 'solid', acc: ['bag'], skin: '#f1c27d', hair: '#3f2a1d', shoes: '#111827', price: 150 });
   let coll = store.get('fs-coll', []), part = 'c1';
   const save = () => { store.set('fs-cur', d); store.set('fs-coll', coll); };
@@ -207,6 +214,6 @@ export async function mount(root) {
     setTimeout(() => { sound('win'); ov.append(h('div', { class: 'fs-res' }, h('h2', {}, t('fs_result', { p: num(approval), n: num(sold), r: num(profit) })), h('p', {}, t('fs_profit')), h('button', { type: 'button', class: 'btn gk-go', onclick: () => ov.remove() }, t('fs_close')))); }, coll.length * 2200 + 2400);
     ov.addEventListener('click', (e) => { if (e.target === ov) ov.remove(); });
   }
-  draw();
+  draw(); setMode(mode);
   return { unmount() { document.querySelector('.fs-show')?.remove(); }, onLang() { draw(); } };
 }

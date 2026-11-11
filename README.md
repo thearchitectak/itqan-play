@@ -116,3 +116,14 @@ npx wrangler pages dev public
 
 ## التراخيص
 كود الموقع بترخيص MIT. المكونات الخارجية في `public/vendor` بتراخيصها الخاصة (انظر `public/vendor/THIRD-PARTY.md`)، ومنها محرك Stockfish بترخيص GPL-3.0، لذلك يبقى المستودع عامًا ومفتوح المصدر.
+
+## حقوق الرسومات
+
+رسومات «استوديو الجمال» في لعبة مصممة الأزياء (`public/games/fashion/lx/`) من حزم الفنانة **LinXueLian**، ومرخّصة بترخيص CC BY 4.0:
+https://linxuelian.itch.io
+
+- يجب الإبقاء على رابط الإسناد إلى صفحة الفنانة داخل اللعبة وفي هذا الملف.
+- لا يجوز إعادة توزيع هذه الملفات حزمةً مستقلة أو رفعها للتنزيل؛ هي مستخدمة هنا داخل اللعبة فقط.
+
+الأيقونات ثلاثية الأبعاد في الألعاب (`public/assets/ico/`) من مجموعة **Microsoft Fluent Emoji** بترخيص MIT:
+https://github.com/microsoft/fluentui-emoji

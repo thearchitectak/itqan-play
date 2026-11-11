@@ -39,9 +39,11 @@
 .mcell .op.l { transform: translate(-50%, -50%) rotate(90deg) translateY(36cqh); }
 .mcell .op.r { transform: translate(-50%, -50%) rotate(-90deg) translateY(36cqh); }
 .mcell .slot { position: absolute; inset: 24%; display: grid; place-items: center; }
-.mcell .fruit { font-size: 26cqw; opacity: .9; filter: saturate(1.1); }
+.mcell .op.c { transform: translate(-50%, -50%); font-size: 17cqw; padding: 4cqw 7cqw; box-shadow: 0 2px 0 rgba(0,0,0,.15), inset 0 1px 0 rgba(255,255,255,.35); transition: all .2s; }
+.mcell.filled .op.c { top: 15%; font-size: 10cqw; padding: 2cqw 5cqw; }
+.mcell.filled .slot { inset: 28% 16% 8%; }
+.mcell .pdot { width: 34%; aspect-ratio: 1; border-radius: 50%; border: 1.5px dashed color-mix(in srgb, var(--tc) 55%, #fff); }
 .mcell.filled { background: color-mix(in srgb, var(--tc) 26%, #fffdf8); }
-.mcell.filled .slot { inset: 18%; }
 .mcell.last { box-shadow: 0 0 0 4px #fde047, 0 6px 16px rgba(0,0,0,.2); }
 .mcell.hint { box-shadow: 0 0 0 4px #fde047; animation: glow 1s ease-in-out infinite alternate; }
 .mcell.dim { opacity: .35; }
@@ -133,12 +135,15 @@ button.m-card:hover { transform: translateY(-6px) rotate(-2deg); }
   .pp { break-after: page; } .pp:last-child { break-after: auto; }
   .pp-title { text-align: center; font-weight: 900; font-size: 16pt; margin-bottom: 6mm; }
   .m-print .mboard { width: 190mm; box-shadow: none; --gap: 1.6mm; border-radius: 5mm; }
-  .pcards { display: grid; grid-template-columns: repeat(5, 1fr); gap: 2mm; direction: ltr; }
-  .pcard { position: relative; height: 40mm; border-radius: 3mm; display: grid; place-items: center; break-inside: avoid; color: #fff; background: var(--cc); border: 1px dashed #999; }
-  .pcard .v { font-size: 28pt; font-weight: 900; }
-  .pcard .c { position: absolute; font-size: 11pt; font-weight: 800; }
-  .pcard .tl { top: 2mm; left: 3mm; transform: rotate(180deg); } .pcard .tr { top: 2mm; right: 3mm; transform: rotate(180deg); }
-  .pcard .bl { bottom: 2mm; left: 3mm; } .pcard .br { bottom: 2mm; right: 3mm; }
+  .pp-title.sm { font-size: 10.5pt; font-weight: 700; margin-bottom: 3mm; color: #555; }
+  .pcards { display: grid; grid-template-columns: repeat(3, 63mm); grid-auto-rows: 88mm; justify-content: center; direction: ltr; }
+  .pcut { border: .3mm dashed #9ca3af; padding: 3mm; display: grid; break-inside: avoid; }
+  .pcard { position: relative; border-radius: 3.5mm; display: grid; place-items: center; color: #fff; background: radial-gradient(ellipse at 50% 35%, color-mix(in srgb, var(--cc) 70%, #fff) 0%, var(--cc) 70%); box-shadow: inset 0 0 0 1.6mm #fff, inset 0 0 0 2.2mm var(--cc); }
+  .pcard .v { font-size: 46pt; font-weight: 900; text-shadow: 0 1mm 0 rgba(0,0,0,.18); }
+  .pcard .brand { position: absolute; bottom: 15mm; font-size: 7pt; opacity: .8; font-weight: 700; }
+  .pcard .c { position: absolute; font-size: 13pt; font-weight: 900; }
+  .pcard .tl { top: 4mm; left: 5mm; transform: rotate(180deg); } .pcard .tr { top: 4mm; right: 5mm; transform: rotate(180deg); }
+  .pcard .bl { bottom: 4mm; left: 5mm; } .pcard .br { bottom: 4mm; right: 5mm; }
   .m-rules { font-size: 11.5pt; }
 }
 
